@@ -1,0 +1,68 @@
+[
+  {
+    "id": "rev-01",
+    "name": "King Nelson",
+    "track": "Cybersecurity & Penetration Testing",
+    "quote": "I had a great learning experience with Mr. Sathish. He explains the concepts clearly and makes even difficult topics easy to understand. His practical approach and real-world examples helped me understand the subjects better. He is patient, supportive, and always ready to clarify doubts.",
+    "rating": 5,
+    "date": "Verified Google Review",
+    "photoUrl": "",
+    "approved": true,
+    "proof": "/images/reviews/Screenshot From 2026-09-14 13-03-33.png"
+  },
+  {
+    "id": "rev-02",
+    "name": "Natarajan Ramasamy",
+    "track": "Penetration Testing — RedTeam Hacker Academy",
+    "quote": "I had a great learning experience at RedTeam Hacker Academy during my cybersecurity and penetration testing training. The training is practical and focuses on understanding concepts rather than just memorizing theory. The trainer, Sathish, explained topics clearly and helped build strong fundamentals.",
+    "rating": 5,
+    "date": "Verified Google Review",
+    "photoUrl": "",
+    "approved": true,
+    "proof": "/images/reviews/Screenshot From 2026-09-14 13-03-39.png"
+  },
+  {
+    "id": "rev-03",
+    "name": "Vandu Yuvan",
+    "track": "Ethical Hacking & Practical Labs",
+    "quote": "Best teaching from trainer Satish, well experienced, and more knowledge gained. 5/5.",
+    "rating": 5,
+    "date": "Verified Google Review",
+    "photoUrl": "",
+    "approved": true,
+    "proof": "/images/reviews/Screenshot From 2026-09-14 13-03-48.png"
+  },
+  {
+    "id": "rev-04",
+    "name": "Rathish Aathi",
+    "track": "CPT V4 — RedTeam Hacker Academy",
+    "quote": "I joined the CPT V4 course at Red Team Hacker Academy, located opposite Phoenix Mall, Velachery, on June 29th, and my learning experience has been really good so far. The academy has a very good structure and a comfortable, professional environment. Sathish Sir explains everything with great clarity and real-world scenarios.",
+    "rating": 5,
+    "date": "Verified Google Review",
+    "photoUrl": "",
+    "approved": true,
+    "proof": "/images/reviews/Screenshot From 2026-09-14 13-03-54.png"
+  },
+  {
+    "id": "rev-05",
+    "name": "Kabilash K N",
+    "track": "Certified Penetration Tester (CPT)",
+    "quote": "I recently completed the CPT course at RedTeam Hacker Academy. A special thanks to Sathish Sir, who explained the concepts clearly and patiently. The practical sessions and hands-on approach helped me understand penetration testing and different cybersecurity tools better. Whenever I had doubts, Sir was supportive and took the time to explain them.",
+    "rating": 5,
+    "date": "Verified Google Review",
+    "photoUrl": "",
+    "approved": true,
+    "proof": "/images/reviews/Screenshot From 2026-09-14 13-04-00.png"
+  },
+  {
+    "id": "rev-06",
+    "name": "S Ranjith Kumar",
+    "track": "CPT Foundation & Offensive Security",
+    "quote": "Red Team Academy has been an excellent platform to build my foundation in penetration testing. The curriculum is well-structured, covering everything from reconnaissance to exploitation with a strong practical focus. My trainer, Sathish, explained complex concepts in a clear and simple manner, making even advanced topics easy to grasp.",
+    "rating": 5,
+    "date": "Verified Google Review",
+    "photoUrl": "",
+    "approved": true,
+    "proof": "/images/reviews/Screenshot From 2026-09-14 13-04-17.png"
+  }
+]
