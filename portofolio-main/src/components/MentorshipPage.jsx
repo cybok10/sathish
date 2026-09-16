@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import reviews from "../../testimonials.json";
+import reviews from "../data/testimonials.json";
 
 const tracks = [
   { id: "foundations", label: "FOUNDATIONS", title: "Cybersecurity Foundations", description: "Build the technical foundation needed to understand how systems, networks, and web applications fail—and how to assess them responsibly.", topics: ["Linux & networking", "Web security & OWASP", "Recon methodology", "Hands-on lab workflow"] },
