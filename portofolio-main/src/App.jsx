@@ -1,398 +1,331 @@
-import { useRef, useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import ProfileCard from "./components/ProfileCard/ProfileCard";
 import ShinyText from "./components/ShinyText/ShinyText";
 import BlurText from "./components/BlurText/BlurText";
-import ScrambledText from "./components/ScrambledText/ScrambledText";
-import SplitText from "./components/SplitText/SplitText";
 import Lanyard from "./components/Lanyard/Lanyard";
-import GlassIcons from "./components/GlassIcons/GlassIcons";
 import { listTools, listProyek } from "./data";
 import ChromaGrid from "./components/ChromaGrid/ChromaGrid";
-import ProjectModal from "./components/ProjectModal/ProjectModal"; // <-- IMPORT MODAL
+import ProjectModal from "./components/ProjectModal/ProjectModal";
 import Aurora from "./components/Aurora/Aurora";
-import AOS from 'aos';
 import reviews from "../testimonials.json";
-import 'aos/dist/aos.css'; // You can also use <link> for styles
-// ..
-AOS.init();
+
+const experienceItems = [
+  {
+    date: "JUN 2026 — PRESENT",
+    role: "Cybersecurity Researcher & Mentor",
+    company: "RedTeam Hacker Academy",
+    detail:
+      "Conduct offensive security research and build hands-on web and network pentesting labs. Mentor students in Metasploit, Burp Suite, Nmap, CTF problem-solving, and secure coding aligned with OWASP Top 10.",
+  },
+  {
+    date: "AUG 2025 — OCT 2025",
+    role: "Penetration Testing Intern",
+    company: "Cyber Nerd",
+    detail:
+      "Conducted full-cycle web and network penetration tests with Metasploit, Nmap, and Burp Suite Pro; created Python tooling for vulnerability scanning, report generation, and system hardening.",
+  },
+  {
+    date: "JUN 2024 — AUG 2024",
+    role: "Ethical Hacking Intern",
+    company: "Internship Studio",
+    detail:
+      "Performed OSINT reconnaissance, digital footprinting, and vulnerability assessments; delivered CVSS-rated remediation reports and built Python automation for reconnaissance workflows.",
+  },
+  {
+    date: "2022 — 2026",
+    role: "B.E. Computer Science & Engineering",
+    company: "Dhanalakshmi Srinivasan Engineering College",
+    detail:
+      "Computer Science and Engineering graduate from Perambalur, Tamil Nadu, with additional security labs, CTF practice, and applied cybersecurity projects.",
+  },
+];
+
+const certifications = [
+  ["Certified Penetration Testing", "RedTeam Hacker Academy"],
+  ["Advanced Ethical Hacking", "GUVI"],
+  ["Offensive Pentesting", "Cybrary"],
+  ["Networking Basics", "Cisco"],
+  ["Linux, Network Security & Nmap", "Udemy"],
+  ["Wireshark & Metasploit", "Infosys Springboard"],
+  ["IoT Fundamentals", "NPTEL"],
+];
+
+const approvedReviews = reviews.filter((review) => review.approved);
+
+function SectionHeading({ eyebrow, title, description, centered = false }) {
+  return (
+    <div className={`section-heading ${centered ? "section-heading--centered" : ""}`}>
+      {eyebrow && <p className="section-eyebrow">{eyebrow}</p>}
+      <h2>{title}</h2>
+      {description && <p className="section-description">{description}</p>}
+    </div>
+  );
+}
 
 function App() {
-  const aboutRef = useRef(null);
-  const [isVisible, setIsVisible] = useState(false);
-
-  const [selectedProject, setSelectedProject] = useState(null); // null = modal tertutup
-
-  const handleProjectClick = (project) => {
-    setSelectedProject(project);
-  };
-
-  const handleCloseModal = () => {
-    setSelectedProject(null);
-  };
-  // -------------------------
+  const [selectedProject, setSelectedProject] = useState(null);
 
   useEffect(() => {
-    const isReload =
-      performance.getEntriesByType("navigation")[0]?.type === "reload";
-
-    if (isReload) {
-      // Ambil path tanpa hash
-      const baseUrl = window.location.origin + "/portofolio/";
-      window.location.replace(baseUrl);
-    }
-  }, []);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.2 }
-    );
-
-    if (aboutRef.current) {
-      observer.observe(aboutRef.current);
-    }
-
-    return () => observer.disconnect();
+    document.title = "Sathish M | Cybersecurity Researcher";
   }, []);
 
   return (
     <>
-      <div className="absolute top-0 left-0 w-full h-full -z-10 ">
+      <div className="hero-aura" aria-hidden="true">
         <Aurora
-          colorStops={["#7dff52", "#1f5f64", "#0b3040"]}
-          blend={0.35}
-          amplitude={1.0}
-          speed={0.35}
+          colorStops={["#7dff52", "#1c5961", "#071522"]}
+          blend={0.22}
+          amplitude={0.75}
+          speed={0.22}
         />
       </div>
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        <div className="hero grid md:grid-cols-2 items-center pt-10 xl:gap-0 gap-6 grid-cols-1">
-          <div className="animate__animated animate__fadeInUp animate__delay-3s">
-            <div className="flex items-center gap-3 mb-6 bg bg-zinc-800 w-fit p-4 rounded-2xl">
-              <img src="/portofolio/assets/sathish/images/icons/shield.png" className="w-10 rounded-md" alt="Cybersecurity shield" />
-              <q>Security is not an afterthought.</q>
+      <main className="portfolio-shell">
+        <section className="hero" id="home">
+          <div className="hero-copy">
+            <div className="hero-kicker">
+              <span className="status-dot" />
+              <span>CYBERSECURITY · PENTESTING · MENTORSHIP</span>
             </div>
-            <h1 className="text-5xl font-bold mb-6">
-              <ShinyText text="Hi, I'm Sathish M" disabled={false} speed={3} className='custom-class' />
+
+            <p className="hero-label">OFFENSIVE SECURITY / SECURITY ENGINEERING</p>
+
+            <h1>
+              Hi, I’m <span>Sathish M</span>.
+              <br />
+              I find weaknesses
+              <br />
+              <span className="hero-accent">before attackers do.</span>
             </h1>
+
             <BlurText
-              text="Offensive cybersecurity researcher and mentor focused on discovering high-impact vulnerabilities before they become critical breaches."
-              delay={150}
+              text="Cybersecurity researcher and mentor focused on web application security, penetration testing, security monitoring, and practical security education."
+              delay={70}
               animateBy="words"
               direction="top"
-              className=" mb-6"
+              className="hero-description"
             />
-            <div className="flex items-center sm:gap-4 gap-2">
-              <a 
-                href="/portofolio/assets/sathish/resume.pdf" 
-                download="Sathish_M_Resume.pdf" 
-                className="font-semibold bg-[#1a1a1a] p-4 px-6 rounded-full border border-gray-700 hover:bg-[#222] transition-colors"
-              >
-                <ShinyText text="Download CV" disabled={false} speed={3} className="custom-class" />
-              </a>
 
-              <a href="#project" className="font-semibold bg-[#1a1a1a] p-4 px-6 rounded-full border border-gray-700 hover:bg-[#222] transition-colors">
-                <ShinyText text="Explore My Projects" disabled={false} speed={3} className="custom-class" />
+            <div className="hero-actions">
+              <a href="/portofolio/assets/sathish/resume.pdf" download="Sathish_M_Resume.pdf" className="button button-primary">
+                Download CV
+              </a>
+              <a href="#project" className="button button-secondary">
+                View projects <span>↗</span>
               </a>
             </div>
 
+            <div className="hero-meta">
+              <span><strong>Web</strong> Security</span>
+              <span><strong>Network</strong> Pentesting</span>
+              <span><strong>SOC</strong> Telemetry</span>
+            </div>
           </div>
-          <div className="md:ml-auto animate__animated animate__fadeInUp animate__delay-4s">
+
+          <div className="hero-profile">
+            <div className="hero-profile-glow" aria-hidden="true" />
             <ProfileCard
               name="Sathish M"
               title="Cybersecurity Researcher"
               handle="cybok10"
-              status="Online"
+              status="Available for security work"
               contactText="Contact Me"
               avatarUrl="/portofolio/assets/sathish/profile.png"
-              showUserInfo={true}
-              enableTilt={true}
+              showUserInfo
+              enableTilt
               enableMobileTilt={false}
-              onContactClick={() => console.log('Contact clicked')}
+              onContactClick={() => {
+                window.location.hash = "contact";
+              }}
             />
           </div>
-        </div>
-        {/* tentang */}
-        <div className="mt-15 mx-auto w-full max-w-[1600px] rounded-3xl border-[5px] border-violet-500/40 shadow-[0_0_30px_rgba(168,85,247,0.4)] bg-gradient-to-br from-[#0a0a0a] via-[#111111] to-[#1a1a1a] p-6" id="about">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-10 pt-0 px-8" data-aos="fade-up" data-aos-duration="1000" data-aos-once="true">
-            <div className="basis-full md:basis-7/12 pr-0 md:pr-8 border-b md:border-b-0 md:border-r border-violet-500/30">
-              {/* Kolom kiri */}
-              <div className="flex-1 text-left">
-                <h2 className="text-3xl md:text-4xl font-bold text-white mb-5">
-                  About Me
-                </h2>
+        </section>
 
-                <BlurText
-                  text="I’m Sathish M, a cybersecurity researcher and penetration tester specializing in web application security, Active Directory, network pivoting, and SOC telemetry with Wazuh SIEM. I also mentor students through hands-on labs and CTF-style learning at RedTeam Hacker Academy."
-                  delay={150}
-                  animateBy="words"
-                  direction="top"
-                  className="text-base md:text-lg leading-relaxed mb-10 text-gray-300"
-                />
+        <section className="about-section section-card" id="about">
+          <div className="about-copy">
+            <SectionHeading
+              eyebrow="01 / PROFILE"
+              title="Security mindset. Practical execution."
+              description="I’m Sathish M, a cybersecurity researcher and penetration tester specializing in web application security, Active Directory, network pivoting, and SOC telemetry with Wazuh SIEM. I also mentor students through hands-on labs and CTF-style learning."
+            />
 
-                <div className="flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-y-8 sm:gap-y-0 mb-4 w-full">
-                  <div>
-                    <h1 className="text-3xl md:text-4xl mb-1">
-                      30<span className="text-violet-500">+</span>
-                    </h1>
-                    <p>Students Mentored</p>
-                  </div>
-                  <div>
-                    <h1 className="text-3xl md:text-4xl mb-1">
-                      3<span className="text-violet-500">+</span>
-                    </h1>
-                    <p>Security Engineering Roles</p>
-                  </div>
-                  <div data-aos="fade-up" data-aos-duration="1000" data-aos-delay="600" data-aos-once="true">
-                    <h1 className="text-3xl md:text-4xl mb-1">
-                      8.6<span className="text-violet-500">/10</span>
-                    </h1>
-                    <p>B.E. CSE CGPA</p>
-                  </div>
-                </div>
-
-
-                <ShinyText
-                  text="Think like an attacker. Build stronger defenses."
-                  disabled={false}
-                  speed={3}
-                  className="text-sm md:text-base text-violet-400"
-                />
-              </div>
+            <div className="stats-grid">
+              <div><strong>30+</strong><span>Students mentored</span></div>
+              <div><strong>4+</strong><span>Years of security learning</span></div>
+              <div><strong>8.6</strong><span>B.E. CSE CGPA</span></div>
             </div>
 
-            {/* Kolom kanan */}
-            <div className="basis-full md:basis-5/12 pl-0 md:pl-8 overflow-hidden max-w-full flex justify-center ">
-              <Lanyard position={[0, 0, 15]} gravity={[0, -40, 0]} />
+            <div className="quote-line">
+              <span />
+              <ShinyText text="Think like an attacker. Build stronger defenses." disabled={false} speed={4} />
             </div>
           </div>
 
-        </div>
-        <div className="tools mt-32">
-          <h1 className="text-4xl/snug font-bold mb-4" data-aos="fade-up" data-aos-duration="1000" data-aos-once="true" >Security Arsenal</h1>
-          <p className="w-2/5 text-base/loose opacity-50" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="300" data-aos-once="true">Offensive security, detection engineering, and secure development tools.</p>
-          <div className="tools-box mt-14 grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-4">
+          <div className="about-visual">
+            <Lanyard position={[0, 0, 15]} gravity={[0, -40, 0]} />
+          </div>
+        </section>
 
+        <section className="section-block" id="skills">
+          <SectionHeading
+            eyebrow="02 / SECURITY ARSENAL"
+            title="Tools are useful. Methodology is the skill."
+            description="A practical stack spanning offensive security, detection engineering, automation, and secure development."
+          />
+
+          <div className="tools-grid">
             {listTools.map((tool) => (
-              <div
-                key={tool.id} data-aos="fade-up" data-aos-duration="1000" data-aos-delay={tool.dad} data-aos-once="true"
-                className="flex items-center gap-4 p-4 border border-zinc-700 rounded-xl bg-zinc-900/60 backdrop-blur-md hover:bg-zinc-800/80 transition-all duration-300 group shadow-lg"
-              >
-                <img
-                  src={tool.gambar}
-                  alt="Tools Image"
-                  className="w-16 h-16 object-contain bg-zinc-800 p-2 rounded-lg group-hover:bg-zinc-900 transition-all duration-300"
-                />
-                <div className="flex flex-col overflow-hidden">
-                  <div className="truncate">
-                    <ShinyText
-                      text={tool.nama}
-                      disabled={false}
-                      speed={3}
-                      className="text-lg font-semibold block"
-                    />
-                  </div>
-                  <p className="text-sm text-zinc-400 truncate">{tool.ket}</p>
+              <article className="tool-card" key={tool.id} data-aos="fade-up" data-aos-once="true">
+                <div className="tool-icon">
+                  <img src={tool.gambar} alt="" loading="lazy" />
                 </div>
-              </div>
+                <div>
+                  <h3>{tool.nama}</h3>
+                  <p>{tool.ket}</p>
+                </div>
+              </article>
             ))}
           </div>
-        </div>
-        {/* tentang */}
+        </section>
 
-        {/* Proyek */}
-        <div className="proyek mt-32 py-10" id="project" data-aos="fade-up" data-aos-duration="1000" data-aos-once="true"></div>
-        <h1 className="text-center text-4xl font-bold mb-2" data-aos="fade-up" data-aos-duration="1000" data-aos-once="true">Project</h1>
-        <p className="text-base/loose text-center opacity-50" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="300" data-aos-once="true">Practical security labs, detection pipelines, and secure engineering projects.</p>
-        <div className="proyek-box mt-14" >
+        <section className="section-block" id="project">
+          <SectionHeading
+            eyebrow="03 / SELECTED WORK"
+            title="Projects built around real security problems."
+            description="Labs, detection pipelines, and security-focused products designed to demonstrate practical problem-solving."
+            centered
+          />
 
-          <div style={{ height: 'auto', position: 'relative' }} data-aos="fade-up" data-aos-duration="1000" data-aos-delay="400" data-aos-once="true" >
-            <ChromaGrid
-              items={listProyek}
-              onItemClick={handleProjectClick} // Kirim fungsi untuk handle klik
-              radius={500}
-              damping={0.45}
-              fadeOut={0.6}
-              ease="power3.out"
-            />
-          </div>
-        </div>
-        {/* Proyek */}
+          <ChromaGrid
+            items={listProyek}
+            onItemClick={setSelectedProject}
+            radius={420}
+            damping={0.45}
+            fadeOut={0.6}
+            ease="power3.out"
+          />
+        </section>
 
-        <section className="mt-32" id="experience">
-          <h1 className="text-center text-4xl font-bold mb-2" data-aos="fade-up" data-aos-once="true">Experience</h1>
-          <p className="text-base/loose text-center opacity-50 mb-10">A hands-on path through offensive research, mentoring, and secure engineering.</p>
+        <section className="section-block" id="experience">
+          <SectionHeading
+            eyebrow="04 / EXPERIENCE"
+            title="Hands-on from labs to mentoring."
+            description="A concise timeline of security work, internships, mentoring, and academic foundations."
+            centered
+          />
+
           <div className="experience-timeline">
-            {[
-              ["JUN 2026 — PRESENT", "Cybersecurity Researcher & Mentor", "RedTeam Hacker Academy", "Conduct offensive security research and build hands-on web and network pentesting labs. Mentor students in Metasploit, Burp Suite, Nmap, CTF problem-solving, and secure coding aligned with OWASP Top 10."],
-              ["AUG 2025 — OCT 2025", "Penetration Testing Intern", "Cyber Nerd", "Conducted full-cycle web and network penetration tests with Metasploit, Nmap, and Burp Suite Pro; created Python tooling for vulnerability scanning, report generation, and system hardening."],
-              ["JUN 2024 — AUG 2024", "Ethical Hacking Intern", "Internship Studio", "Performed OSINT reconnaissance, digital footprinting, and vulnerability assessments; delivered CVSS-rated remediation reports and built Python automation for reconnaissance workflows."],
-              ["2022 — PRESENT", "B.E. Computer Science & Engineering", "Dhanalakshmi Srinivasan Engineering College", "CGPA: 8.6 · Perambalur, Tamil Nadu. Complemented academic study with security labs, CTF practice, and applied research."],
-            ].map(([date, role, company, detail]) => (
-              <article key={role} className="timeline-entry" data-aos="fade-up" data-aos-once="true">
+            {experienceItems.map((item) => (
+              <article className="timeline-entry" key={item.role}>
                 <div className="timeline-marker" aria-hidden="true" />
                 <div className="timeline-card">
-                  <p className="text-violet-400 text-sm mb-2">{date}</p>
-                  <h2 className="text-xl font-bold mb-1">{role}</h2>
-                  <p className="text-zinc-300 mb-3">{company}</p>
-                  <p className="text-zinc-400 leading-relaxed">{detail}</p>
+                  <p className="timeline-date">{item.date}</p>
+                  <h3>{item.role}</h3>
+                  <p className="timeline-company">{item.company}</p>
+                  <p className="timeline-detail">{item.detail}</p>
                 </div>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="mt-32" id="certifications">
-          <h1 className="text-center text-4xl font-bold mb-2" data-aos="fade-up" data-aos-once="true">Certifications & Training</h1>
-          <p className="text-base/loose text-center opacity-50 mb-10">Verified learning across offensive security, networking, and defensive monitoring.</p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              ["Certified Penetration Testing", "RedTeam Hacker Academy"],
-              ["Advanced Ethical Hacking", "GUVI"],
-              ["Offensive Pentesting", "Cybrary"],
-              ["Networking Basics", "Cisco"],
-              ["Linux, Network Security & Nmap", "Udemy"],
-              ["Wireshark & Metasploit", "Infosys Springboard"],
-              ["IoT Fundamentals", "NPTEL"],
-            ].map(([certificate, issuer]) => (
-              <article key={certificate} className="bg-zinc-900/60 border border-zinc-700 rounded-xl p-6" data-aos="fade-up" data-aos-once="true">
-                <p className="text-violet-400 text-sm mb-2">CERTIFICATION</p>
-                <h2 className="text-lg font-bold mb-2">{certificate}</h2>
-                <p className="text-zinc-400">{issuer}</p>
+        <section className="section-block" id="certifications">
+          <SectionHeading
+            eyebrow="05 / LEARNING"
+            title="Certifications & training."
+            description="Selected training completed across offensive security, networking, Linux, and security tooling."
+            centered
+          />
+
+          <div className="cert-grid">
+            {certifications.map(([certificate, issuer]) => (
+              <article className="cert-card" key={certificate}>
+                <span className="cert-index">CERT /</span>
+                <h3>{certificate}</h3>
+                <p>{issuer}</p>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="mt-32" id="mentorship">
-          <h1 className="text-center text-4xl font-bold mb-2" data-aos="fade-up" data-aos-once="true">Mentorship & Impact</h1>
-          <p className="text-base/loose text-center opacity-50 mb-10">Training the next generation of ethical hackers through hands-on labs and practical security education.</p>
-          <div className="grid md:grid-cols-2 gap-6 mb-10">
-            <img src="/portofolio/assets/sathish/images/students/classroom-session.jpeg" alt="Sathish leading a cybersecurity training session" className="w-full h-72 object-cover rounded-xl border border-zinc-700" loading="lazy" />
-            <img src="/portofolio/assets/sathish/images/students/group-photo.jpeg" alt="Students at RedTeam Hacker Academy" className="w-full h-72 object-cover rounded-xl border border-zinc-700" loading="lazy" />
+        <section className="section-block" id="mentorship">
+          <SectionHeading
+            eyebrow="06 / MENTORSHIP"
+            title="Learn security by doing."
+            description="I use practical labs, clear explanations, and real-world scenarios to help learners build confidence."
+            centered
+          />
+
+          <div className="mentorship-media">
+            <img src="/portofolio/assets/sathish/images/students/classroom-session.jpeg" alt="Sathish leading a cybersecurity training session" loading="lazy" />
+            <img src="/portofolio/assets/sathish/images/students/group-photo.jpeg" alt="Students at RedTeam Hacker Academy" loading="lazy" />
           </div>
+
           <div className="reviews-marquee" aria-label="Student reviews">
             <div className="reviews-track">
-            {[...reviews.filter((review) => review.approved), ...reviews.filter((review) => review.approved)].map((review, index) => (
-              <article key={`${review.id}-${index}`} className="review-float-card" aria-hidden={index >= reviews.filter((item) => item.approved).length}>
-                <p className="text-yellow-400 mb-3">{'★'.repeat(review.rating)}</p>
-                <p className="text-zinc-300 leading-relaxed mb-4">“{review.quote}”</p>
-                <p className="font-semibold">{review.name}</p>
-                <p className="text-sm text-zinc-500">{review.track}</p>
-              </article>
-            ))}
+              {[...approvedReviews, ...approvedReviews].map((review, index) => (
+                <article
+                  key={`${review.id}-${index}`}
+                  className="review-float-card"
+                  aria-hidden={index >= approvedReviews.length}
+                >
+                  <p className="review-stars">{"★".repeat(review.rating)}</p>
+                  <p className="review-quote">“{review.quote}”</p>
+                  <p className="review-name">{review.name}</p>
+                  <p className="review-track">{review.track}</p>
+                </article>
+              ))}
             </div>
           </div>
+
+          <a href="/portofolio/mentorship" className="mentorship-cta">
+            Explore mentorship <span>↗</span>
+          </a>
         </section>
 
+        <section className="contact-section section-card" id="contact">
+          <div className="contact-copy">
+            <SectionHeading
+              eyebrow="07 / CONTACT"
+              title="Let’s make systems harder to break."
+              description="Looking for a penetration tester, application-security researcher, or hands-on cybersecurity trainer? Let’s collaborate."
+            />
 
-        {/* Kontak */}
-        <div className="kontak mt-32 sm:p-10 p-0" id="contact">
-          <h1
-            className="text-4xl mb-2 font-bold text-center"
-            data-aos="fade-up"
-            data-aos-duration="1000"
-            data-aos-once="true"
-          >
-            Let’s Make Systems Harder to Break
-          </h1>
-          <p
-            className="text-base/loose text-center mb-10 opacity-50"
-            data-aos="fade-up"
-            data-aos-duration="1000"
-            data-aos-delay="300"
-            data-aos-once="true"
-          >
-            Looking for a penetration tester, application-security researcher, or hands-on cybersecurity trainer? Let’s collaborate.
-          </p>
-
-          {/* Container dua kolom */}
-          <div className="flex flex-col md:flex-row gap-8">
-            <div className="flex-1 bg-zinc-800 p-6 rounded-md" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="400" data-aos-once="true">
-              <h2 className="text-2xl font-bold mb-5">Connect with Sathish</h2>
-              <p className="text-zinc-400 mb-6 leading-relaxed">Available for security engineering, penetration testing, application-security research, and cybersecurity training.</p>
-              <div className="flex flex-col gap-4">
-                <a className="text-violet-400 hover:text-violet-300" href="mailto:sathish1012cybok@gmail.com">sathish1012cybok@gmail.com</a>
-                <a className="text-violet-400 hover:text-violet-300" href="tel:+918940599732">+91 89405 99732</a>
-                <a className="text-violet-400 hover:text-violet-300" href="https://linkedin.com/in/amsathish" target="_blank" rel="noreferrer">LinkedIn ↗</a>
-                <a className="text-violet-400 hover:text-violet-300" href="https://github.com/cybok10" target="_blank" rel="noreferrer">GitHub ↗</a>
-              </div>
-            </div>
-
-            {/* Contact Form di kanan */}
-            <div className="flex-1">
-              <form
-                action="https://formsubmit.co/sathish1012cybok@gmail.com"
-                method="POST"
-                className="bg-zinc-800 p-10 w-full rounded-md"
-                autoComplete="off"
-                data-aos="fade-up"
-                data-aos-duration="1000"
-                data-aos-delay="500"
-                data-aos-once="true"
-              >
-                <div className="flex flex-col gap-6">
-                  <div className="flex flex-col gap-2">
-                    <label className="font-semibold">Full Name</label>
-                    <input
-                      type="text"
-                      name="Name"
-                      placeholder="Input Name..."
-                      className="border border-zinc-500 p-2 rounded-md"
-                      required
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="font-semibold">Email</label>
-                    <input
-                      type="email"
-                      name="Email"
-                      placeholder="Input Email..."
-                      className="border border-zinc-500 p-2 rounded-md"
-                      required
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label htmlFor="message" className="font-semibold">Message</label>
-                    <textarea
-                      name="message"
-                      id="message"
-                      cols="45"
-                      rows="7"
-                      placeholder="Message..."
-                      className="border border-zinc-500 p-2 rounded-md"
-                      required
-                    ></textarea>
-                  </div>
-                  <div className="text-center">
-                    <button
-                      type="submit"
-                      className="font-semibold bg-[#1a1a1a] p-4 px-6 rounded-full w-full cursor-pointer border border-gray-700 hover:bg-[#222] transition-colors"
-                    >
-                      <ShinyText text="Send" disabled={false} speed={3} className="custom-class" />
-                    </button>
-                  </div>
-                </div>
-              </form>
+            <div className="contact-links">
+              <a href="mailto:sathish1012cybok@gmail.com">sathish1012cybok@gmail.com</a>
+              <a href="tel:+918940599732">+91 89405 99732</a>
+              <a href="https://linkedin.com/in/amsathish" target="_blank" rel="noreferrer">LinkedIn ↗</a>
+              <a href="https://github.com/cybok10" target="_blank" rel="noreferrer">GitHub ↗</a>
             </div>
           </div>
-        </div>
-        {/* Kontak */}
+
+          <form action="https://formsubmit.co/sathish1012cybok@gmail.com" method="POST" className="contact-form" autoComplete="off">
+            <label>
+              Full name
+              <input type="text" name="Name" placeholder="Your name" required />
+            </label>
+            <label>
+              Email
+              <input type="email" name="Email" placeholder="you@example.com" required />
+            </label>
+            <label className="contact-form-wide">
+              Message
+              <textarea name="message" rows="6" placeholder="Tell me what you’re working on..." required />
+            </label>
+            <button type="submit" className="button button-primary contact-submit">
+              Send message <span>↗</span>
+            </button>
+          </form>
+        </section>
       </main>
 
       <ProjectModal
-        isOpen={!!selectedProject}
-        onClose={handleCloseModal}
+        isOpen={Boolean(selectedProject)}
+        onClose={() => setSelectedProject(null)}
         project={selectedProject}
       />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
