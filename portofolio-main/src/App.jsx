@@ -64,10 +64,10 @@ function App() {
     <>
       <div className="absolute top-0 left-0 w-full h-full -z-10 ">
         <Aurora
-          colorStops={["#577870", "#1F97A6", "#127B99"]}
-          blend={0.5}
+          colorStops={["#7dff52", "#1f5f64", "#0b3040"]}
+          blend={0.35}
           amplitude={1.0}
-          speed={0.5}
+          speed={0.35}
         />
       </div>
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
