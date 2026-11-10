@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /portofolio/admin
 
-Sitemap: https://rissss21.github.io/portofolio/sitemap.xml
+Sitemap: https://cybok10.github.io/portofolio/sitemap.xml

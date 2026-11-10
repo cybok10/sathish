@@ -48,7 +48,7 @@ fs.mkdirSync(dataDir, { recursive: true });
 fs.mkdirSync(uploadDir, { recursive: true });
 
 const basePath = (process.env.BASE_PATH || "/portofolio").replace(/\/$/, "");
-const rawSiteUrl = (process.env.SITE_URL || "https://rissss21.github.io/portofolio").replace(/\/$/, "");
+const rawSiteUrl = (process.env.SITE_URL || "https://cybok10.github.io/portofolio").replace(/\/$/, "");
 const siteOrigin =
   basePath && rawSiteUrl.endsWith(basePath) ? rawSiteUrl.slice(0, -basePath.length) : rawSiteUrl;
 
