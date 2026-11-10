@@ -6,9 +6,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cp dist/index.html dist/404.html",
+    "build": "node scripts/export-static.mjs && vite build && cp dist/index.html dist/404.html",
     "lint": "eslint .",
     "preview": "vite preview",
+    "api": "node server/index.js",
+    "blog:export": "node scripts/export-static.mjs",
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {

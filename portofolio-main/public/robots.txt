@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /portofolio/admin
+
+Sitemap: https://rissss21.github.io/portofolio/sitemap.xml
