@@ -5,7 +5,7 @@ import App from './App.jsx'
 import Navbar from './components/Navbar.jsx'
 import Footer from './components/Footer.jsx'
 import PreLoader from './components/PreLoader.jsx'
-import MentorshipPage from './components/MentorshipPage.jsx'
+import MentorshipPage from './components/mentorship/MentorshipPage.jsx'
 import BlogApp from './blog/BlogApp.jsx'
 import "animate.css"
 import AOS from 'aos';
@@ -21,12 +21,16 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     {isBlogPage ? (
       <BlogApp />
+    ) : isMentorshipPage ? (
+      // The mentorship page is full-bleed: it manages its own navigation,
+      // footer and page scope, so it sits outside the shared container.
+      <MentorshipPage />
     ) : (
       <>
         <PreLoader/>
         <div className = "container mx-auto px-6">
           <Navbar />
-          {isMentorshipPage ? <MentorshipPage /> : <App />}
+          <App />
           <Footer/>
         </div>
       </>

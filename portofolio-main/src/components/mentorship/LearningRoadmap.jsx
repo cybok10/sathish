@@ -13,7 +13,7 @@ export default function LearningRoadmap() {
     <section className="ms-section" id="roadmap">
       <div className="ms-wrap">
         <header className="ms-head ms-reveal">
-          <p className="ms-eyebrow">Cybersecurity learning roadmap</p>
+          <p className="ms-eyebrow">03 — Cybersecurity learning roadmap</p>
           <h2 className="ms-title">
             Eight stages, <em>one coherent path</em>
           </h2>

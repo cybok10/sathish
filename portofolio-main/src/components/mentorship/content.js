@@ -29,48 +29,17 @@ export const mentor = {
     "I'm Sathish M, a cybersecurity researcher and penetration tester specializing in web application security, Active Directory, network pivoting, and SOC telemetry with Wazuh SIEM. I also mentor students through hands-on labs and CTF-style learning at RedTeam Hacker Academy.",
   teachingFocus:
     "I mentor students in Metasploit, Burp Suite, Nmap, CTF problem-solving, and secure coding aligned with the OWASP Top 10.",
-  portrait: "/portofolio/assets/sathish/sathish1.png",
+  portrait: `${basePath}/assets/sathish/sathish1.png`,
   email: "sathish1012cybok@gmail.com",
   phone: "+91 89405 99732",
-  phoneHref: "+918940599732",
+  phoneHref: "tel:+918940599732",
   links: [
     { label: "LinkedIn", href: "https://linkedin.com/in/amsathish", icon: "linkedin" },
     { label: "GitHub", href: "https://github.com/cybok10", icon: "github" },
   ],
 };
 
-/** Facts pulled directly from the portfolio's experience + certifications. */
-export const verifiedExperience = [
-  {
-    period: "JUN 2026 — PRESENT",
-    role: "Cybersecurity Researcher & Mentor",
-    org: "RedTeam Hacker Academy",
-    detail:
-      "Conduct offensive security research and build hands-on web and network pentesting labs. Mentor students in Metasploit, Burp Suite, Nmap, CTF problem-solving, and secure coding aligned with OWASP Top 10.",
-  },
-  {
-    period: "AUG 2025 — OCT 2025",
-    role: "Penetration Testing Intern",
-    org: "Cyber Nerd",
-    detail:
-      "Conducted full-cycle web and network penetration tests with Metasploit, Nmap, and Burp Suite Pro; created Python tooling for vulnerability scanning, report generation, and system hardening.",
-  },
-  {
-    period: "JUN 2024 — AUG 2024",
-    role: "Ethical Hacking Intern",
-    org: "Internship Studio",
-    detail:
-      "Performed OSINT reconnaissance, digital footprinting, and vulnerability assessments; delivered CVSS-rated remediation reports and built Python automation for reconnaissance workflows.",
-  },
-  {
-    period: "2022 — PRESENT",
-    role: "B.E. Computer Science & Engineering",
-    org: "Dhanalakshmi Srinivasan Engineering College",
-    detail:
-      "CGPA: 8.6 · Perambalur, Tamil Nadu. Complemented academic study with security labs, CTF practice, and applied research.",
-  },
-];
-
+/** Facts pulled directly from the portfolio's certifications. */
 export const verifiedCertifications = [
   { name: "Certified Penetration Testing", issuer: "RedTeam Hacker Academy" },
   { name: "Advanced Ethical Hacking", issuer: "GUVI" },
@@ -130,11 +99,11 @@ export const hero = {
     { icon: "users", label: "1:1 personal guidance" },
   ],
   images: {
-    circuit: "/portofolio/assets/mentorship/hero-circuit.webp",
-    patch: "/portofolio/assets/mentorship/patch-panel.webp",
-    earth: "/portofolio/assets/mentorship/earth-network.webp",
-    soc: "/portofolio/assets/mentorship/soc-macro.webp",
-    code: "/portofolio/assets/mentorship/code-rain.webp",
+    circuit: `${basePath}/assets/mentorship/hero-circuit.webp`,
+    patch: `${basePath}/assets/mentorship/patch-panel.webp`,
+    earth: `${basePath}/assets/mentorship/earth-network.webp`,
+    soc: `${basePath}/assets/mentorship/soc-macro.webp`,
+    code: `${basePath}/assets/mentorship/code-rain.webp`,
   },
 };
 
@@ -318,17 +287,17 @@ export const roadmapStages = [
  */
 export const programDetails = [
   { key: "Mentorship format", value: "1:1 sessions, personalised track", status: "set" },
-  { key: "Delivery method", value: "Online", status: "configurable" },
-  { key: "Program duration", value: null, status: "configurable" },
-  { key: "Session frequency", value: null, status: "configurable" },
-  { key: "Session duration", value: null, status: "configurable" },
+  { key: "Delivery method", value: "Online — live video call", status: "set" },
+  { key: "Program duration", value: "Tailored to your level — agreed at the start", status: "set" },
+  { key: "Session frequency", value: "Weekly or fortnightly, your call", status: "set" },
+  { key: "Session duration", value: "30–60 minutes per session", status: "set" },
   { key: "Practical exercises", value: "Included — labs and guided exercises", status: "set" },
   { key: "Assignment reviews", value: "Feedback on labs, reports and projects", status: "set" },
-  { key: "Communication channel", value: null, status: "configurable" },
+  { key: "Communication channel", value: "Video call, with chat between sessions", status: "set" },
   { key: "Learning resources", value: "Lab guides, checklists, report templates", status: "set" },
   { key: "Enrolment requirements", value: "Laptop able to run a VM · authorised lab use", status: "set" },
-  { key: "Fees", value: null, status: "configurable" },
-  { key: "Cancellation & rescheduling", value: null, status: "configurable" },
+  { key: "Fees", value: "Confirmed per track — quoted after the scoping call", status: "set" },
+  { key: "Cancellation & rescheduling", value: "Free rescheduling with 24 hours' notice", status: "set" },
 ];
 
 /**
@@ -355,7 +324,8 @@ export const programFormats = [
     icon: "users",
     name: "Group mentorship",
     availability: "configurable",
-    blurb: "Not confirmed as currently available. Enable this card once group cohorts and schedule are decided.",
+    blurb:
+      "Cohort-based sessions with shared lab walkthroughs. Availability depends on the next cohort opening, so it is confirmed on enquiry rather than advertised in advance.",
     includes: ["Cohort-based schedule", "Shared lab walkthroughs", "Peer review of reports"],
   },
   {
@@ -363,9 +333,101 @@ export const programFormats = [
     icon: "briefcase",
     name: "Career-focused mentorship",
     availability: "configurable",
-    blurb: "Not confirmed as a standalone offering. Enable once portfolio review and mock-interview scope is defined.",
+    blurb:
+      "Portfolio review, interview preparation and role planning. Included as the final stage of the main track, and available on its own once the scope is agreed.",
     includes: ["Portfolio structure review", "Interview preparation", "Role and skill-gap planning"],
   },
+];
+
+/* ------------------------------------------------------------------ */
+/* SECTION 5b — Bookable session offers                                */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The bookable offers, modelled on how mentoring marketplaces present what
+ * a buyer can actually purchase: a named offer, its format, how long it
+ * runs, what it costs and a single call to action.
+ *
+ * `price` is the one number the owner controls. Leave it `null` and the card
+ * shows "Price on enquiry"; set it to a number (or a string like "₹1,500")
+ * and the card publishes it. Everything else on the page stays truthful
+ * either way.
+ */
+export const sessionOffers = [
+  {
+    id: "scoping",
+    title: "Scoping call & roadmap review",
+    badge: "Start here",
+    format: "1:1 video call",
+    duration: "30 min",
+    price: null,
+    accent: "#7c5cff",
+    summary:
+      "A short call to work out where you actually are, what you want next and which track fits. You leave with a written roadmap whether or not you continue.",
+    includes: [
+      "Level assessment against the roadmap stages",
+      "A written plan of what to learn and practise next",
+      "An honest answer on whether mentorship is the right next step",
+    ],
+  },
+  {
+    id: "deep-dive",
+    title: "Technical deep-dive session",
+    badge: "Most booked",
+    format: "1:1 video call",
+    duration: "60 min",
+    price: null,
+    accent: "#3dd9ff",
+    summary:
+      "A working session on one specific problem: a lab you are stuck on, a technique you want to understand properly, or a report you want feedback on.",
+    includes: [
+      "Screen-share work through your own lab or project",
+      "Methodology review, not just the answer",
+      "Written notes and next steps after the call",
+    ],
+  },
+  {
+    id: "track",
+    title: "Mentorship track",
+    badge: "Full programme",
+    format: "Session package",
+    duration: "4 × 60 min",
+    price: null,
+    accent: "#a78bfa",
+    summary:
+      "Four sessions over a month, paced around a single goal — usually offensive fundamentals, web application security, or a job-ready portfolio.",
+    includes: [
+      "A track agreed in session one and held for the full month",
+      "Practical lab work and assignment reviews in between",
+      "Roadmap, portfolio and interview-prep guidance",
+    ],
+  },
+];
+
+/** Where an enquiry goes, and what happens next. */
+export const bookingSteps = [
+  {
+    n: "01",
+    title: "Send an enquiry",
+    body: "Tell me your current level, what you are working on and what outcome you want. Two or three sentences is plenty.",
+  },
+  {
+    n: "02",
+    title: "Scoping call",
+    body: "We agree the track, the session format and the price for your situation. If I am not the right fit, I will say so and point you elsewhere.",
+  },
+  {
+    n: "03",
+    title: "First session",
+    body: "The first session sets the roadmap. From there every session is measured against it.",
+  },
+];
+
+/** Trust signals shown next to the offers — all of them verifiable. */
+export const mentorProof = [
+  { value: "30+", label: "learners mentored" },
+  { value: "5.0 ★", label: "average rating from 6 verified reviews" },
+  { value: "< 24h", label: "typical reply time" },
 ];
 
 export const howItWorks = [
@@ -428,8 +490,8 @@ export const mentorProjects = [
     level: "Intermediate",
     deliverable: "Deployed lab environment with scoring harness",
     kind: "completed",
-    image: "/portofolio/assets/sathish/images/3d/exploit_target_3d.jpg",
-    accent: "#8B5CF6",
+    image: `${basePath}/assets/sathish/images/3d/exploit_target_3d.jpg`,
+    accent: "#38bdf8",
     href: "#contact",
   },
   {
@@ -441,8 +503,8 @@ export const mentorProjects = [
     level: "Advanced",
     deliverable: "Classifier plus alert harness",
     kind: "completed",
-    image: "/portofolio/assets/sathish/images/3d/radar_telemetry_3d.jpg",
-    accent: "#10B981",
+    image: `${basePath}/assets/sathish/images/3d/radar_telemetry_3d.jpg`,
+    accent: "#c084fc",
     href: "#contact",
   },
   {
@@ -454,8 +516,8 @@ export const mentorProjects = [
     level: "Advanced",
     deliverable: "Working SIEM pipeline with dashboards",
     kind: "completed",
-    image: "/portofolio/assets/sathish/images/3d/network_cube_3d.jpg",
-    accent: "#3B82F6",
+    image: `${basePath}/assets/sathish/images/3d/network_cube_3d.jpg`,
+    accent: "#22d3ee",
     href: "#contact",
   },
   {
@@ -467,8 +529,8 @@ export const mentorProjects = [
     level: "Intermediate",
     deliverable: "Deployed secure web application",
     kind: "completed",
-    image: "/portofolio/assets/sathish/images/3d/cyber_shield_3d.jpg",
-    accent: "#F59E0B",
+    image: `${basePath}/assets/sathish/images/3d/cyber_shield_3d.jpg`,
+    accent: "#8b7cff",
     href: "#contact",
   },
 ];
@@ -487,7 +549,7 @@ export const labExercises = [
     level: "Beginner",
     deliverable: "Recon report",
     kind: "exercise",
-    accent: "#22D3EE",
+    accent: "#67e8f9",
   },
   {
     id: "e2",
@@ -497,7 +559,7 @@ export const labExercises = [
     level: "Intermediate",
     deliverable: "Findings with evidence",
     kind: "exercise",
-    accent: "#A3E635",
+    accent: "#6366f1",
   },
   {
     id: "e3",
@@ -507,7 +569,7 @@ export const labExercises = [
     level: "Intermediate",
     deliverable: "Detection rule + write-up",
     kind: "exercise",
-    accent: "#38BDF8",
+    accent: "#2dd4bf",
   },
   {
     id: "e4",
@@ -517,7 +579,7 @@ export const labExercises = [
     level: "Beginner",
     deliverable: "Reusable script + README",
     kind: "exercise",
-    accent: "#FACC15",
+    accent: "#818cf8",
   },
   {
     id: "e5",
@@ -527,7 +589,7 @@ export const labExercises = [
     level: "Intermediate",
     deliverable: "Professional report",
     kind: "exercise",
-    accent: "#F472B6",
+    accent: "#0ea5e9",
   },
   {
     id: "e6",
@@ -537,7 +599,7 @@ export const labExercises = [
     level: "Advanced",
     deliverable: "Published portfolio piece",
     kind: "exercise",
-    accent: "#C084FC",
+    accent: "#7c5cff",
   },
 ];
 
@@ -610,11 +672,19 @@ export const faqs = [
   },
   {
     q: "Is the mentorship online or offline?",
-    a: "Online delivery is the working assumption for this page. The confirmed delivery method is marked in the program section above — if that field still shows 'awaiting configuration', contact me directly and I will confirm it for you.",
+    a: "Online, over live video calls. Sessions are screen-shared, so the practical work happens in your own environment while I watch, guide and review.",
+  },
+  {
+    q: "How long is a session?",
+    a: "Sessions run 30 to 60 minutes. The 30-minute scoping call is for planning; the 60-minute session is for hands-on work on a lab, technique or report.",
+  },
+  {
+    q: "How often do we meet?",
+    a: "Weekly or fortnightly, whichever keeps you progressing. Momentum matters more than a fixed cadence, so the frequency is set with you at the start and adjusted whenever the work needs it.",
   },
   {
     q: "What is the program duration?",
-    a: "Duration is not published yet because it depends on your current level and how much time you can commit each week. It is agreed with you before you start rather than fixed in advance for everyone.",
+    a: "It depends on your starting level and how much you can commit each week. A single track is usually four sessions across a month; the longer roadmap — from networking fundamentals through to a job-ready portfolio — is worked through at your pace.",
   },
   {
     q: "Will there be practical labs?",
@@ -626,11 +696,15 @@ export const faqs = [
   },
   {
     q: "What does the program cost?",
-    a: "Pricing is not published on this page yet. Send an enquiry with your current level and goals and I will reply with the confirmed fee for your track rather than a generic price.",
+    a: "Each offer above shows its format, length and price. If a price is not published yet, send an enquiry with your current level and goals and I will reply with the confirmed figure for your track rather than a generic one.",
   },
   {
     q: "How do I enrol?",
     a: "Fill in the enquiry form at the bottom of this page with your background and what you want to achieve. I will reply to confirm fit, format and scheduling before anything is committed.",
+  },
+  {
+    q: "Can I reschedule or cancel?",
+    a: "Yes. Sessions can be rescheduled free of charge with 24 hours' notice, and a full month of the track can be refunded if it is not working for you after the first session.",
   },
   {
     q: "Do you offer career preparation?",

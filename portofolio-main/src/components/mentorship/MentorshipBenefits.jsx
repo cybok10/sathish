@@ -6,7 +6,7 @@ export default function MentorshipBenefits() {
     <section className="ms-section" id="approach">
       <div className="ms-wrap">
         <header className="ms-head ms-reveal">
-          <p className="ms-eyebrow">Teaching approach & benefits</p>
+          <p className="ms-eyebrow">07 — Teaching approach &amp; benefits</p>
           <h2 className="ms-title">
             Why structured beats <em>random tutorials</em>
           </h2>

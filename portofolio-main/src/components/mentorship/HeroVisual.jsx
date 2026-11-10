@@ -94,7 +94,7 @@ function NetworkShell({ reduced }) {
         </bufferGeometry>
         <pointsMaterial
           size={0.075}
-          color="#b8ff2e"
+          color="#7c5cff"
           sizeAttenuation
           transparent
           opacity={0.9}
@@ -104,7 +104,7 @@ function NetworkShell({ reduced }) {
         <bufferGeometry>
           <bufferAttribute attach="attributes-position" args={[edges, 3]} />
         </bufferGeometry>
-        <lineBasicMaterial color="#22d3ee" transparent opacity={0.28} />
+        <lineBasicMaterial color="#3dd9ff" transparent opacity={0.28} />
       </lineSegments>
     </group>
   );
@@ -144,16 +144,16 @@ function Shield({ reduced }) {
     <group>
       <mesh ref={mesh} geometry={geo} castShadow={false}>
         <meshStandardMaterial
-          color="#0d1522"
+          color="#12101f"
           metalness={0.72}
           roughness={0.32}
-          emissive="#b8ff2e"
+          emissive="#7c5cff"
           emissiveIntensity={0.1}
           envMapIntensity={1}
         />
       </mesh>
       <lineSegments ref={inner} geometry={edge}>
-        <lineBasicMaterial color="#b8ff2e" transparent opacity={0.85} />
+        <lineBasicMaterial color="#7c5cff" transparent opacity={0.85} />
       </lineSegments>
     </group>
   );
@@ -183,7 +183,7 @@ function Particles({ reduced }) {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial size={0.035} color="#94a3b8" transparent opacity={0.5} sizeAttenuation />
+      <pointsMaterial size={0.035} color="#7f7a9b" transparent opacity={0.5} sizeAttenuation />
     </points>
   );
 }
@@ -206,8 +206,8 @@ function Scene({ reduced }) {
       <Rig reduced={reduced} />
       <ambientLight intensity={0.75} />
       <directionalLight position={[4, 6, 5]} intensity={2.1} color="#ffffff" />
-      <directionalLight position={[-5, -2, -4]} intensity={1.3} color="#22d3ee" />
-      <pointLight position={[0, -3, 3]} intensity={9} distance={12} color="#b8ff2e" />
+      <directionalLight position={[-5, -2, -4]} intensity={1.3} color="#3dd9ff" />
+      <pointLight position={[0, -3, 3]} intensity={9} distance={12} color="#7c5cff" />
       <Shield reduced={reduced} />
       <NetworkShell reduced={reduced} />
       <Particles reduced={reduced} />

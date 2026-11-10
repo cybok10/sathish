@@ -2,8 +2,11 @@ import { usePrefersReducedMotion } from "./hooks";
 
 /**
  * Subtle page-wide decoration: a slow-moving gradient wash and a faint
- * node/edge field. Purely CSS-driven (GPU-friendly, no JS scroll work) and
+ * scanline field. Purely CSS-driven (GPU-friendly, no JS scroll work) and
  * fully disabled under prefers-reduced-motion.
+ *
+ * The colours come from the page's own theme tokens, so the decoration
+ * follows the palette instead of being pinned to one set of colours.
  */
 export default function BackgroundEffects() {
   const reduced = usePrefersReducedMotion();
@@ -29,9 +32,9 @@ const css = `
   position: absolute;
   inset: -30%;
   background:
-    radial-gradient(38% 32% at 18% 22%, rgba(184,255,46,0.10), transparent 65%),
-    radial-gradient(42% 36% at 82% 70%, rgba(34,211,238,0.11), transparent 65%),
-    radial-gradient(30% 28% at 55% 95%, rgba(56,189,248,0.08), transparent 70%);
+    radial-gradient(38% 32% at 18% 22%, rgba(var(--ms-accent-rgb), 0.16), transparent 65%),
+    radial-gradient(42% 36% at 82% 70%, rgba(var(--ms-accent-2-rgb), 0.14), transparent 65%),
+    radial-gradient(30% 28% at 55% 95%, rgba(var(--ms-accent-2-rgb), 0.1), transparent 70%);
   animation: ms-aurora 34s ease-in-out infinite alternate;
   will-change: transform;
 }
@@ -45,8 +48,8 @@ const css = `
   inset: 0;
   background: repeating-linear-gradient(
     180deg,
-    rgba(148,163,184,0.035) 0px,
-    rgba(148,163,184,0.035) 1px,
+    rgba(var(--ms-muted-rgb), 0.04) 0px,
+    rgba(var(--ms-muted-rgb), 0.04) 1px,
     transparent 1px,
     transparent 4px
   );
@@ -54,5 +57,4 @@ const css = `
   opacity: 0.5;
 }
 .ms-fx[data-reduced="true"] .ms-fx__aurora { animation: none; }
-.ms-page { position: relative; z-index: 1; }
 `;

@@ -6,7 +6,7 @@ export default function TechnologyStack() {
     <section className="ms-section" id="tools">
       <div className="ms-wrap">
         <header className="ms-head ms-reveal">
-          <p className="ms-eyebrow">Tools & technologies</p>
+          <p className="ms-eyebrow">08 — Tools &amp; technologies</p>
           <h2 className="ms-title">
             A focused stack, <em>not a logo wall</em>
           </h2>

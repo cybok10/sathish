@@ -10,13 +10,13 @@ export default function MentorshipProgram() {
       <div className="ms-grid-bg" aria-hidden="true" />
       <div className="ms-wrap" style={{ position: "relative" }}>
         <header className="ms-head ms-reveal">
-          <p className="ms-eyebrow">Mentorship program</p>
+          <p className="ms-eyebrow">05 — Mentorship program</p>
           <h2 className="ms-title">
             How the mentorship <em>actually works</em>
           </h2>
           <p className="ms-sub">
-            Formats, logistics and terms — with the things I haven&apos;t decided yet
-            clearly marked, rather than filled in with marketing copy.
+            Formats, logistics and terms — stated plainly, with the formats I have not
+            decided to run yet marked as such rather than dressed up as marketing copy.
           </p>
         </header>
 
@@ -58,7 +58,7 @@ export default function MentorshipProgram() {
           <icons.info
             size={14}
             aria-hidden="true"
-            style={{ verticalAlign: -2, marginRight: 6, color: "var(--ms-cyan)" }}
+            style={{ verticalAlign: -2, marginRight: 6, color: "var(--ms-accent-2)" }}
           />
           Cards marked <strong style={{ color: "var(--ms-text-2)" }}>Not confirmed</strong>{" "}
           are shown for transparency so nothing hypothetical is sold as an available

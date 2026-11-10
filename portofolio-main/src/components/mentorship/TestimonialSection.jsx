@@ -1,5 +1,5 @@
 import icons from "./icons";
-import testimonials, { testimonialDisclaimer, resolveProof } from "./content";
+import { testimonials, testimonialDisclaimer, resolveProof } from "./content";
 
 function Stars({ rating }) {
   return (
@@ -33,7 +33,7 @@ export default function TestimonialSection() {
       <div className="ms-grid-bg" aria-hidden="true" />
       <div className="ms-wrap" style={{ position: "relative" }}>
         <header className="ms-head ms-reveal">
-          <p className="ms-eyebrow">Testimonials</p>
+          <p className="ms-eyebrow">09 — Testimonials</p>
           <h2 className="ms-title">
             What learners <em>actually said</em>
           </h2>
@@ -56,7 +56,7 @@ export default function TestimonialSection() {
                   <icons.quote
                     size={18}
                     aria-hidden="true"
-                    style={{ color: "var(--ms-lime)", opacity: 0.55 }}
+                    style={{ color: "var(--ms-accent)", opacity: 0.55 }}
                   />
                   <Stars rating={t.rating} />
                 </div>

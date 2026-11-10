@@ -10,7 +10,7 @@ export default function AudienceSection() {
       <div className="ms-grid-bg" aria-hidden="true" />
       <div className="ms-wrap" style={{ position: "relative" }}>
         <header className="ms-head ms-reveal">
-          <p className="ms-eyebrow">Who is this for?</p>
+          <p className="ms-eyebrow">02 — Who is this for?</p>
           <h2 className="ms-title">
             Find out if this <em>fits you</em> before you commit
           </h2>
@@ -73,7 +73,7 @@ export default function AudienceSection() {
               <icons.lock
                 size={17}
                 aria-hidden="true"
-                style={{ color: "var(--ms-cyan)", marginRight: 8, verticalAlign: -3 }}
+                style={{ color: "var(--ms-accent-2)", marginRight: 8, verticalAlign: -3 }}
               />
               Authorised environments only
             </h3>

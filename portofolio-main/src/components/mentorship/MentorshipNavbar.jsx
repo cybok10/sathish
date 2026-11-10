@@ -5,9 +5,10 @@ import { useStuck, useActiveSection, useSmoothScroll } from "./hooks";
 
 export const navLinks = [
   { label: "About", href: "#about", id: "about" },
-  { label: "Learning Roadmap", href: "#roadmap", id: "roadmap" },
-  { label: "Practical Projects", href: "#projects", id: "projects" },
-  { label: "Mentorship Details", href: "#program", id: "program" },
+  { label: "Roadmap", href: "#roadmap", id: "roadmap" },
+  { label: "Projects", href: "#projects", id: "projects" },
+  { label: "Details", href: "#program", id: "program" },
+  { label: "Offers", href: "#offers", id: "offers" },
   { label: "FAQ", href: "#faq", id: "faq" },
   { label: "Contact", href: "#contact", id: "contact" },
 ];

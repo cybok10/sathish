@@ -1,7 +1,6 @@
 import icons from "./icons";
 import {
   mentor,
-  verifiedExperience,
   verifiedCertifications,
   verifiedStats,
   specialisms,
@@ -13,7 +12,7 @@ export default function MentorIntroduction() {
     <section className="ms-section" id="about">
       <div className="ms-wrap">
         <header className="ms-head ms-reveal">
-          <p className="ms-eyebrow">About the mentor</p>
+          <p className="ms-eyebrow">01 — About the mentor</p>
           <h2 className="ms-title">
             The person guiding <em>your</em> learning
           </h2>
@@ -96,30 +95,11 @@ export default function MentorIntroduction() {
                   <icons.sparkles
                     size={17}
                     aria-hidden="true"
-                    style={{ color: "var(--ms-lime)", marginTop: 3, flex: "none" }}
+                    style={{ color: "var(--ms-accent)", marginTop: 3, flex: "none" }}
                   />
                   <div>
                     <strong>{p.title}</strong>
                     <p>{p.body}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <h4
-              className="ms-eyebrow"
-              style={{ marginTop: "2.2rem", marginBottom: "0.4rem" }}
-            >
-              Background & experience
-            </h4>
-            <div className="ms-timeline">
-              {verifiedExperience.map((e) => (
-                <div className="ms-timeline__item" key={e.period + e.role}>
-                  <div className="ms-timeline__when">{e.period}</div>
-                  <div className="ms-timeline__what">
-                    <strong>{e.role}</strong>
-                    <em>{e.org}</em>
-                    <p>{e.detail}</p>
                   </div>
                 </div>
               ))}

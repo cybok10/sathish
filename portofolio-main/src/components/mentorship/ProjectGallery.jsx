@@ -103,7 +103,7 @@ export default function ProjectGallery() {
       <div className="ms-grid-bg" aria-hidden="true" />
       <div className="ms-wrap" style={{ position: "relative" }}>
         <header className="ms-head ms-reveal">
-          <p className="ms-eyebrow">Practical projects & labs</p>
+          <p className="ms-eyebrow">04 — Practical projects &amp; labs</p>
           <h2 className="ms-title">
             Work you can <em>point at</em>
           </h2>
