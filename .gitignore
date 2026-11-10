@@ -23,3 +23,13 @@ venv/
 # OS
 .DS_Store
 Thumbs.db
+
+# Local scratch / tool output
+.playwright-mcp/
+crash.png
+
+# Stale working copies of the site (not part of the repo)
+portofolio-main-copy/
+
+# Stray duplicate assets (kept on disk, not part of the repo)
+sathish1.png
