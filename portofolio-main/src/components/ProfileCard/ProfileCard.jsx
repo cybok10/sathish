@@ -46,7 +46,6 @@ const ProfileCardComponent = ({
   mobileTiltSensitivity = 5,
   miniAvatarUrl,
   name = "Javi A. Torres",
-  title = "Software Engineer",
   handle = "javicodes",
   status = "Online",
   contactText = "Contact",
@@ -336,12 +335,6 @@ const ProfileCardComponent = ({
                 </button>
               </div>
             )}
-          </div>
-          <div className="pc-content">
-            <div className="pc-details">
-              <h3>{name}</h3>
-              <p>{title}</p>
-            </div>
           </div>
         </div>
       </section>

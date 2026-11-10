@@ -1,19 +1,21 @@
 import { useState, useEffect } from "react";
 
 const Navbar = ({ hidden = false }) => {
-  // ⛔ Saat hidden, jangan render apa pun
-  if (hidden) return null;
-
   const [active, setActive] = useState(false);
   const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
   const isMentorshipPage = window.location.pathname.replace(/\/$/, '') === `${basePath}/mentorship`;
 
   useEffect(() => {
+    if (hidden) return;
     const handleScroll = () => setActive(window.scrollY > 150);
     handleScroll(); // init posisi saat mount
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [hidden]);
+
+  // ⛔ Saat hidden, jangan render apa pun
+  // (setelah hooks, supaya urutan hooks konsisten antar render)
+  if (hidden) return null;
 
   return (
     <nav className="navbar relative z-50 py-7 flex items-center justify-between px-6 md:px-12">
@@ -39,6 +41,7 @@ const Navbar = ({ hidden = false }) => {
         <li><a href="#project" className="sm:text-lg text-base font-medium">Projects</a></li>
         <li><a href="#experience" className="sm:text-lg text-base font-medium">Experience</a></li>
         <li><a href="/portofolio/mentorship" className="sm:text-lg text-base font-medium">Mentorship</a></li>
+        <li><a href={`${basePath}/blog`} className="sm:text-lg text-base font-medium">Blog</a></li>
         <li><a href="#contact" className="sm:text-lg text-base font-medium">Contact</a></li>
       </ul>
     </nav>

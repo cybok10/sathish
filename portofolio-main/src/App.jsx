@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import ProfileCard from "./components/ProfileCard/ProfileCard";
 import ShinyText from "./components/ShinyText/ShinyText";
 import BlurText from "./components/BlurText/BlurText";
@@ -17,9 +17,6 @@ import 'aos/dist/aos.css'; // You can also use <link> for styles
 AOS.init();
 
 function App() {
-  const aboutRef = useRef(null);
-  const [isVisible, setIsVisible] = useState(false);
-
   const [selectedProject, setSelectedProject] = useState(null); // null = modal tertutup
 
   const handleProjectClick = (project) => {
@@ -40,24 +37,6 @@ function App() {
       const baseUrl = window.location.origin + "/portofolio/";
       window.location.replace(baseUrl);
     }
-  }, []);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.2 }
-    );
-
-    if (aboutRef.current) {
-      observer.observe(aboutRef.current);
-    }
-
-    return () => observer.disconnect();
   }, []);
 
   return (
@@ -106,11 +85,10 @@ function App() {
           <div className="md:ml-auto animate__animated animate__fadeInUp animate__delay-4s">
             <ProfileCard
               name="Sathish M"
-              title="Cybersecurity Researcher"
               handle="cybok10"
               status="Online"
               contactText="Contact Me"
-              avatarUrl="/portofolio/assets/sathish/profile.png"
+              avatarUrl="/portofolio/assets/sathish/sathish1.png"
               showUserInfo={true}
               enableTilt={true}
               enableMobileTilt={false}
