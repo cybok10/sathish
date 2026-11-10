@@ -5,13 +5,12 @@ import FaqSection from "./FaqSection";
 import HeroSection from "./HeroSection";
 import LearningRoadmap from "./LearningRoadmap";
 import MentorIntroduction from "./MentorIntroduction";
-import MentorshipBenefits from "./MentorshipBenefits";
 import MentorshipFooter from "./MentorshipFooter";
 import MentorshipNavbar from "./MentorshipNavbar";
 import MentorshipProgram from "./MentorshipProgram";
 import ProjectGallery from "./ProjectGallery";
+import SessionGallery from "./SessionGallery";
 import SessionOffers from "./SessionOffers";
-import AudienceSection from "./AudienceSection";
 import TechnologyStack from "./TechnologyStack";
 import TestimonialSection from "./TestimonialSection";
 import "./mentorship.css";
@@ -34,12 +33,11 @@ export default function MentorshipPage() {
       <main id="top">
         <HeroSection />
         <MentorIntroduction />
-        <AudienceSection />
+        <SessionGallery />
         <LearningRoadmap />
         <ProjectGallery />
         <MentorshipProgram />
         <SessionOffers />
-        <MentorshipBenefits />
         <TechnologyStack />
         <TestimonialSection />
         <FaqSection />

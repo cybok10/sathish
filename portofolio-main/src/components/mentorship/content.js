@@ -108,64 +108,7 @@ export const hero = {
 };
 
 /* ------------------------------------------------------------------ */
-/* SECTION 4 — Audience                                                 */
-/* ------------------------------------------------------------------ */
-
-export const audience = [
-  {
-    icon: "sprout",
-    title: "Complete beginners",
-    body: "You have never touched a terminal and want a structured, non-intimidating way in.",
-    fit: "Starts from networking and Linux fundamentals",
-  },
-  {
-    icon: "network",
-    title: "Students learning networking & security",
-    body: "You know some theory from college and want it connected to how systems actually behave.",
-    fit: "Maps academic concepts onto real lab work",
-  },
-  {
-    icon: "crosshair",
-    title: "Aspiring penetration testers",
-    body: "You want a repeatable methodology from reconnaissance through validation and reporting.",
-    fit: "Guided VAPT workflow and report feedback",
-  },
-  {
-    icon: "radar",
-    title: "Aspiring SOC analysts",
-    body: "You want to read logs, correlate events and understand detection rather than only attack.",
-    fit: "SIEM fundamentals, log analysis, incident response",
-  },
-  {
-    icon: "code",
-    title: "Web security learners",
-    body: "You build web apps and want to understand how they break and how to harden them.",
-    fit: "OWASP Top 10 in an authorised environment",
-  },
-  {
-    icon: "briefcase",
-    title: "Students preparing for interviews",
-    body: "You can do labs but struggle to explain your decisions to an interviewer.",
-    fit: "Portfolio evidence and technical explanation practice",
-  },
-  {
-    icon: "folder",
-    title: "Learners building a first portfolio",
-    body: "You need credible, documented work to show instead of a list of course completions.",
-    fit: "Projects, write-ups and remediation documentation",
-  },
-];
-
-export const prerequisites = [
-  { label: "Laptop", detail: "8 GB RAM minimum, ability to run a virtual machine.", required: true },
-  { label: "Basic computer literacy", detail: "Comfortable with files, terminals and installing software.", required: true },
-  { label: "Networking basics", detail: "Helpful, but covered in stage 1 if you are starting fresh.", required: false },
-  { label: "Programming experience", detail: "Not required. Python is taught from the ground up.", required: false },
-  { label: "Authorised lab access", detail: "All practice runs in isolated, authorised environments you control.", required: true },
-];
-
-/* ------------------------------------------------------------------ */
-/* SECTION 5 — Learning roadmap                                         */
+/* SECTION 4 — Learning roadmap                                         */
 /* ------------------------------------------------------------------ */
 
 export const roadmapStages = [
@@ -277,7 +220,7 @@ export const roadmapStages = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* SECTION 6 — Program details                                          */
+/* SECTION 5b — Program details                                          */
 /* ------------------------------------------------------------------ */
 
 /**
@@ -340,7 +283,61 @@ export const programFormats = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* SECTION 5b — Bookable session offers                                */
+/* SECTION 3 — In the room                                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Photographs from live RedTeam Hacker Academy sessions. These are real
+ * sessions, so the captions describe what is in the frame rather than
+ * claiming an outcome.
+ *
+ * `size` drives the grid placement: "wide" for the landscape frames,
+ * "tall" for the portrait ones.
+ */
+export const sessionGallery = [
+  {
+    src: `${basePath}/assets/mentorship/classroom-whiteboard.jpeg`,
+    alt: "Instructor at a whiteboard explaining a web application testing technique while a terminal and the class screens are visible",
+    caption: "Web application testing on the board — the walkthrough happens with the tools on screen, not on a slide.",
+    size: "wide",
+    width: 1600,
+    height: 1200,
+  },
+  {
+    src: `${basePath}/assets/mentorship/learner-group.jpeg`,
+    alt: "A group of learners standing together in a classroom at RedTeam Hacker Academy",
+    caption: "Learners at RedTeam Hacker Academy, where this format was built.",
+    size: "wide",
+    width: 1600,
+    height: 1200,
+  },
+  {
+    src: `${basePath}/assets/mentorship/lab-session.jpeg`,
+    alt: "A classroom lab session with an instructor at the front and students working at laptops",
+    caption: "Lab sessions run hands-on: everyone works on their own machine while the instructor moves through the room.",
+    size: "tall",
+    width: 960,
+    height: 1280,
+  },
+  {
+    src: `${basePath}/assets/mentorship/ptg-performer-award.jpeg`,
+    alt: "The instructor presenting a PTG Performer of the Month certificate to a student",
+    caption: "PTG Performer of the Month — progress here is measured, not just claimed.",
+    size: "tall",
+    width: 960,
+    height: 1280,
+  },
+];
+
+/** Sits in the gallery grid beside the photographs. */
+export const galleryNote = {
+  title: "Same format, one-to-one",
+  body: "These are group sessions. The mentorship runs the same material in a single session, with the screen shared and your own environment as the working surface.",
+  link: { label: "See the session offers", href: "#offers" },
+};
+
+/* ------------------------------------------------------------------ */
+/* SECTION 5 — Bookable session offers                                */
 /* ------------------------------------------------------------------ */
 
 /**
@@ -438,7 +435,7 @@ export const howItWorks = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* SECTION 7 — Tools                                                    */
+/* SECTION 6 — Tools                                                    */
 /* ------------------------------------------------------------------ */
 
 export const toolGroups = [
@@ -476,7 +473,7 @@ export const toolDisclaimer =
   "Tools shown reflect the mentor's hands-on stack and the lab environment. Exactly which ones appear in your track is confirmed with you before you start — coverage is not promised as a fixed checklist.";
 
 /* ------------------------------------------------------------------ */
-/* SECTION 8 — Projects & labs                                          */
+/* SECTION 7 — Projects & labs                                          */
 /* ------------------------------------------------------------------ */
 
 /** Real projects completed by the mentor (sourced from src/data.js). */
@@ -604,28 +601,7 @@ export const labExercises = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* SECTION 9 — Approach & benefits                                      */
-/* ------------------------------------------------------------------ */
-
-export const benefits = [
-  { icon: "list", title: "Structured learning", body: "A sequence with a reason behind it, instead of a random playlist of tutorials you never finish." },
-  { icon: "terminal", title: "Practical alongside theory", body: "Every concept is followed by something you run, observe and explain back in your own words." },
-  { icon: "life", title: "Guided troubleshooting", body: "When a lab stalls you get help diagnosing the assumption that broke — not just the answer." },
-  { icon: "flag", title: "Clear milestones", body: "You always know what 'done' looks like for the current stage and what comes next." },
-  { icon: "message", title: "Assignment & report feedback", body: "Written and practical work is reviewed so mistakes surface early, while they are still cheap." },
-  { icon: "compass", title: "Career-path guidance", body: "Connect what you are learning to realistic roles and the evidence those roles actually require." },
-  { icon: "folder", title: "Portfolio development", body: "Leave with documented work you can show, not only a list of courses completed." },
-  { icon: "mic", title: "Interview preparation", body: "Practise explaining your own decisions out loud — the skill interviews really test." },
-];
-
-export const outcomes = [
-  { n: "01", title: "A clear roadmap", body: "Know what to learn, what to practise and what to build next instead of jumping between unrelated tutorials." },
-  { n: "02", title: "Practical feedback", body: "Get guidance on labs, methodology, reports, projects and the technical decisions behind your work." },
-  { n: "03", title: "Career direction", body: "Connect technical learning with realistic roles, portfolio evidence and long-term growth." },
-];
-
-/* ------------------------------------------------------------------ */
-/* SECTION 10 — Testimonials                                            */
+/* SECTION 8 — Testimonials                                            */
 /* ------------------------------------------------------------------ */
 
 /**
@@ -654,7 +630,7 @@ export function resolveProof(proof) {
 }
 
 /* ------------------------------------------------------------------ */
-/* SECTION 11 — FAQ                                                     */
+/* SECTION 9 — FAQ                                                     */
 /* ------------------------------------------------------------------ */
 
 export const faqs = [
@@ -713,7 +689,7 @@ export const faqs = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* SECTION 12 — Enrolment form options                                  */
+/* SECTION 10 — Enrolment form options                                  */
 /* ------------------------------------------------------------------ */
 
 export const levelOptions = [

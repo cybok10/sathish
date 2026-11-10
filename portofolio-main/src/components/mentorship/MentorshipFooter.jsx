@@ -7,7 +7,7 @@ const COLUMNS = [
     links: [
       { label: "Session offers", href: "#offers" },
       { label: "Learning roadmap", href: "#roadmap" },
-      { label: "Who it is for", href: "#audience" },
+      { label: "In the room", href: "#gallery" },
       { label: "Mentorship details", href: "#program" },
       { label: "Questions", href: "#faq" },
     ],

@@ -52,7 +52,7 @@ export default function ContactSection() {
     <section className="ms-section ms-contact" id="contact">
       <div className="ms-wrap">
         <header className="ms-head">
-          <p className="ms-eyebrow">11 — Start a conversation</p>
+          <p className="ms-eyebrow">10 — Start a conversation</p>
           <h2 className="ms-title">
             Tell me where you want to go <em>next.</em>
           </h2>

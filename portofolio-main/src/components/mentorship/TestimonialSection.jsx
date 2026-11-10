@@ -33,7 +33,7 @@ export default function TestimonialSection() {
       <div className="ms-grid-bg" aria-hidden="true" />
       <div className="ms-wrap" style={{ position: "relative" }}>
         <header className="ms-head ms-reveal">
-          <p className="ms-eyebrow">09 — Testimonials</p>
+          <p className="ms-eyebrow">08 — Testimonials</p>
           <h2 className="ms-title">
             What learners <em>actually said</em>
           </h2>

@@ -16,7 +16,7 @@ export default function FaqSection() {
     <section className="ms-section" id="faq">
       <div className="ms-wrap">
         <header className="ms-head">
-          <p className="ms-eyebrow">10 — Questions</p>
+          <p className="ms-eyebrow">09 — Questions</p>
           <h2 className="ms-title">
             Everything people ask <em>before the first session.</em>
           </h2>

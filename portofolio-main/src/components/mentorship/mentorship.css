@@ -470,32 +470,9 @@
 /* ==================================================================
    AUDIENCE
    ================================================================== */
-.ms-aud-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 1rem; }
-.ms-aud { display: flex; flex-direction: column; gap: 0.7rem; }
-.ms-aud__icon {
-  width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center;
-  background: rgba(var(--ms-accent-rgb), 0.09); border: 1px solid rgba(var(--ms-accent-rgb), 0.24);
-  color: var(--ms-accent);
-}
-.ms-aud h3 { font-size: 1.02rem; }
-.ms-aud p { color: var(--ms-text-2); font-size: 0.88rem; line-height: 1.65; }
-.ms-aud__fit { font-family: var(--ms-mono); font-size: 0.7rem; color: var(--ms-accent-2); border-top: 1px dashed var(--ms-line); padding-top: 0.7rem; margin-top: auto; }
 
-.ms-prereq { margin-top: 2.6rem; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: clamp(1.4rem, 3vw, 2.6rem); align-items: start; }
-.ms-prereq__list { display: grid; gap: 0.6rem; }
-.ms-prereq__item { display: flex; align-items: flex-start; gap: 0.8rem; padding: 0.85rem 1rem; background: var(--ms-surface); border: 1px solid var(--ms-line); border-radius: var(--ms-r); }
-.ms-prereq__mark { font-family: var(--ms-mono); font-size: 0.62rem; letter-spacing: 0.1em; padding: 0.24rem 0.5rem; border-radius: 5px; flex: none; margin-top: 2px; }
-.ms-prereq__mark--req { background: rgba(var(--ms-accent-rgb), 0.14); color: var(--ms-accent); border: 1px solid rgba(var(--ms-accent-rgb), 0.3); }
-.ms-prereq__mark--opt { background: rgba(var(--ms-muted-rgb), 0.1); color: var(--ms-text-3); border: 1px solid var(--ms-line); }
-.ms-prereq__item strong { font-size: 0.9rem; display: block; }
-.ms-prereq__item span { font-size: 0.83rem; color: var(--ms-text-2); line-height: 1.55; }
 
-.ms-prereq__note { background: linear-gradient(150deg, rgba(var(--ms-accent-2-rgb), 0.08), transparent 70%); border: 1px solid var(--ms-line); border-radius: var(--ms-r-lg); padding: clamp(1.3rem, 3vw, 1.9rem); }
-.ms-prereq__note h3 { font-size: 1.1rem; margin-bottom: 0.8rem; }
-.ms-prereq__note p { color: var(--ms-text-2); font-size: 0.9rem; line-height: 1.75; }
-.ms-prereq__note p + p { margin-top: 0.8rem; }
 
-@media (max-width: 860px) { .ms-prereq { grid-template-columns: 1fr; } }
 
 /* ==================================================================
    ROADMAP
@@ -688,17 +665,7 @@
 /* ==================================================================
    BENEFITS
    ================================================================== */
-.ms-benefits { display: grid; grid-template-columns: repeat(auto-fill, minmax(265px, 1fr)); gap: 1rem; }
-.ms-benefit { display: flex; flex-direction: column; gap: 0.7rem; }
-.ms-benefit__icon { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; background: rgba(var(--ms-accent-2-rgb), 0.09); border: 1px solid rgba(var(--ms-accent-2-rgb), 0.24); color: var(--ms-accent-2); }
-.ms-benefit h3 { font-size: 1rem; }
-.ms-benefit p { color: var(--ms-text-2); font-size: 0.87rem; line-height: 1.68; }
 
-.ms-outcomes { display: grid; grid-template-columns: repeat(auto-fit, minmax(245px, 1fr)); gap: 1rem; margin-top: 1rem; }
-.ms-outcome-card { position: relative; padding-left: 0; }
-.ms-outcome-card b { font-family: var(--ms-mono); font-size: 2.2rem; color: rgba(var(--ms-accent-rgb), 0.22); font-weight: 700; display: block; line-height: 1; }
-.ms-outcome-card h3 { font-size: 1.05rem; margin-top: 0.7rem; }
-.ms-outcome-card p { color: var(--ms-text-2); font-size: 0.87rem; line-height: 1.68; margin-top: 0.55rem; }
 
 /* ==================================================================
    TESTIMONIALS
@@ -1092,4 +1059,70 @@ a.ms-contact__row:hover { border-color: var(--ms-accent); background: rgba(var(-
 @media (max-width: 760px) {
   .ms-proofbar { grid-template-columns: 1fr; }
   .ms-offer__pick { grid-template-columns: 1fr; grid-template-areas: "icon" "head" "meta"; }
+}
+
+/* ==================================================================
+   IN THE ROOM — photographs from live sessions
+   ================================================================== */
+.ms-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 1rem;
+}
+.ms-gallery-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--ms-r-lg);
+  border: 1px solid var(--ms-line);
+  background: var(--ms-surface);
+}
+.ms-gallery-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.7s var(--ms-ease);
+}
+.ms-gallery-card:hover img { transform: scale(1.045); }
+.ms-gallery-card figcaption {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 2.6rem 1.15rem 1rem;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--ms-text);
+  background: linear-gradient(transparent, rgba(var(--ms-bg-rgb), 0.55) 38%, rgba(var(--ms-bg-rgb), 0.94));
+}
+.ms-gallery-card--wide { grid-column: span 7; aspect-ratio: 16 / 10; }
+.ms-gallery-card--wide + .ms-gallery-card--wide { grid-column: span 5; }
+.ms-gallery-card--tall { grid-column: span 4; aspect-ratio: 4 / 5; }
+
+.ms-gallery-note {
+  grid-column: span 4;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: clamp(1.4rem, 3vw, 2rem);
+  border: 1px solid var(--ms-line);
+  border-radius: var(--ms-r-lg);
+  background: linear-gradient(160deg, var(--ms-surface), var(--ms-bg-2));
+}
+.ms-gallery-note svg { color: var(--ms-accent); flex: none; }
+.ms-gallery-note h3 { font-size: 1.15rem; }
+.ms-gallery-note p {
+  color: var(--ms-text-2);
+  font-size: 0.9rem;
+  line-height: 1.75;
+  flex: 1;
+}
+
+@media (max-width: 980px) {
+  .ms-gallery-card--wide,
+  .ms-gallery-card--wide + .ms-gallery-card--wide { grid-column: span 12; }
+  .ms-gallery-card--tall { grid-column: span 6; }
+  .ms-gallery-note { grid-column: span 12; }
+}
+@media (max-width: 560px) {
+  .ms-gallery-card--tall { grid-column: span 12; }
 }
