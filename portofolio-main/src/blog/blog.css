@@ -520,6 +520,10 @@
 }
 
 .blog-section-head a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: none;
   color: var(--blog-accent);
   font-size: 0.85rem;
   font-weight: 600;
@@ -2196,7 +2200,17 @@
   box-shadow: 0 24px 60px -20px rgba(0, 0, 0, 0.85);
   z-index: 40;
 }
+/* Bridge the gap between the trigger and the panel so the pointer can
+   cross it without the menu closing. */
 .blog-dropdown__panel::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -1.15rem;
+  height: 1.15rem;
+}
+.blog-dropdown__panel::after {
   content: "";
   position: absolute;
   top: -0.45rem;
@@ -2252,9 +2266,76 @@
 
 /* --- layout ------------------------------------------------------ */
 .blog-tac { padding-bottom: 4rem; }
-.blog-tac-indexhead { margin-bottom: 2rem; }
-.blog-tac-indexhead .blog-display { margin: 0.4rem 0 0.9rem; }
-.blog-tac-indexhead .blog-lead { max-width: 68ch; }
+.blog-tac-indexhead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 19rem;
+  gap: 2.5rem;
+  align-items: start;
+  margin-bottom: 2rem;
+}
+.blog-tac-indexhead__copy .blog-display { margin: 0.4rem 0 0.9rem; }
+.blog-tac-indexhead__copy .blog-lead { max-width: 62ch; }
+.blog-tac-indexhead__copy .blog-btn { margin-top: 1.1rem; }
+
+.blog-tac-indexhead__panel {
+  display: grid;
+  gap: 1.1rem;
+  padding: 1.25rem 1.35rem;
+  border: 1px solid var(--blog-line);
+  border-radius: 14px;
+  background: var(--blog-surface);
+}
+.blog-tac-stats {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+.blog-tac-stats li { min-width: 0; }
+.blog-tac-stats strong {
+  display: block;
+  font-size: 1.25rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: #fafafa;
+}
+.blog-tac-stats strong.is-small { font-size: 0.95rem; white-space: nowrap; }
+.blog-tac-stats span {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.64rem;
+  line-height: 1.35;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--blog-dim);
+}
+
+.blog-tac-bars { display: grid; gap: 0.5rem; }
+.blog-tac-bar { display: grid; gap: 0.28rem; }
+.blog-tac-bar__label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  font-size: 0.72rem;
+  color: var(--blog-muted);
+}
+.blog-tac-bar__label b { color: var(--blog-text); font-weight: 600; }
+.blog-tac-bar__track {
+  display: block;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--blog-line);
+  overflow: hidden;
+}
+.blog-tac-bar__fill {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.4s var(--blog-ease, ease);
+}
 
 .blog-tac-head {
   display: block;
@@ -2469,6 +2550,11 @@
 }
 .blog-tac-search input::placeholder { color: var(--blog-dim); }
 .blog-tac-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+.blog-tac-tags .blog-chip--more {
+  color: var(--blog-accent);
+  border-color: rgba(167, 139, 250, 0.4);
+  background: rgba(167, 139, 250, 0.08);
+}
 .blog-tac-tags .blog-chip { cursor: pointer; font-family: inherit; }
 .blog-tac-count { margin-bottom: 1.2rem; font-size: 0.8rem; }
 
@@ -2509,7 +2595,7 @@
   font-size: 0.85rem;
   line-height: 1.6;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -2659,7 +2745,16 @@
 .blog-tac-hardcard:hover { border-color: rgba(45, 212, 191, 0.45); transform: translateY(-2px); }
 .blog-tac-hardcard__head { display: flex; align-items: center; gap: 0.6rem; color: var(--blog-teal); }
 .blog-tac-hardcard__title { color: #fafafa; font-weight: 600; font-size: 1rem; }
-.blog-tac-hardcard__desc { color: var(--blog-muted); font-size: 0.85rem; line-height: 1.6; flex: 1; }
+.blog-tac-hardcard__desc {
+  color: var(--blog-muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 .blog-tac-hardcard__foot {
   display: flex;
   align-items: center;
@@ -2701,7 +2796,9 @@
 
 /* --- responsive -------------------------------------------------- */
 @media (max-width: 980px) {
-  .blog-tac-body { grid-template-columns: minmax(0, 1fr); }
+  .blog-tac-body,
+  .blog-tac-indexhead { grid-template-columns: minmax(0, 1fr); }
+  .blog-tac-indexhead__panel { max-width: 30rem; }
   .blog-tac-side { position: static; max-height: 22rem; }
   .blog-dropdown__panel { grid-template-columns: 1fr; width: min(22rem, calc(100vw - 2rem)); }
   .blog-dropdown__panel::before { display: none; }
@@ -2735,3 +2832,68 @@
   font-size: 0.74rem;
   color: var(--blog-muted);
 }
+
+/* ==================================================================
+   TACTICS PROMO — the library entry point on the blog home
+   ================================================================== */
+.blog-tac-promo {
+  margin-top: 2.75rem;
+  padding: 2.25rem 0 2.5rem;
+  border-top: 1px solid var(--blog-line);
+  border-bottom: 1px solid var(--blog-line);
+  background:
+    radial-gradient(70% 120% at 12% 0%, rgba(167, 139, 250, 0.1), transparent 60%),
+    radial-gradient(60% 110% at 88% 100%, rgba(45, 212, 191, 0.08), transparent 60%);
+}
+.blog-tac-promo__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 0.9rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.blog-tac-promo__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  height: 100%;
+  padding: 1.3rem 1.4rem;
+  border: 1px solid var(--blog-line);
+  border-radius: 14px;
+  background: var(--blog-surface);
+  text-decoration: none;
+  transition: border-color 0.25s ease, transform 0.25s ease;
+}
+.blog-tac-promo__card:hover {
+  transform: translateY(-3px);
+}
+.blog-tac-promo__card--violet:hover { border-color: rgba(167, 139, 250, 0.55); }
+.blog-tac-promo__card--teal:hover { border-color: rgba(45, 212, 191, 0.55); }
+.blog-tac-promo__card--amber:hover { border-color: rgba(251, 191, 36, 0.5); }
+.blog-tac-promo__title {
+  color: #fafafa;
+  font-weight: 600;
+  font-size: 1.02rem;
+}
+.blog-tac-promo__card--violet .blog-tac-promo__title { color: var(--blog-accent); }
+.blog-tac-promo__card--teal .blog-tac-promo__title { color: var(--blog-teal); }
+.blog-tac-promo__card--amber .blog-tac-promo__title { color: #fbbf24; }
+.blog-tac-promo__blurb {
+  color: var(--blog-muted);
+  font-size: 0.85rem;
+  line-height: 1.65;
+  flex: 1;
+}
+.blog-tac-promo__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--blog-line);
+  color: var(--blog-dim);
+  font-size: 0.78rem;
+}
+.blog-tac-promo__meta strong { color: var(--blog-text); }
+.blog-tac-promo__meta svg { margin-left: auto; }

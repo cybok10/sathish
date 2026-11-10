@@ -1,7 +1,16 @@
 import { Link } from "../router";
 import { hardening } from "../data/tactics";
 import { useSeo } from "../seo";
+import TacticsHeader from "../components/TacticsHeader";
 import { ArrowRight, ShieldIcon } from "../components/Icons";
+
+const SEVERITY_LABEL = { critical: "Critical", high: "High", medium: "Medium", low: "Low" };
+const SEVERITY_COLOR = {
+  critical: "#fb7185",
+  high: "#fb923c",
+  medium: "#facc15",
+  low: "#64748b",
+};
 
 /**
  * The hardening index.
@@ -11,6 +20,14 @@ import { ArrowRight, ShieldIcon } from "../components/Icons";
  */
 export default function HardeningIndex() {
   const total = hardening.reduce((sum, guide) => sum + guide.checks.length, 0);
+
+  const severityCounts = hardening
+    .reduce((counts, guide) => {
+      for (const check of guide.checks) {
+        if (counts[check.severity] !== undefined) counts[check.severity] += 1;
+      }
+      return counts;
+    }, { critical: 0, high: 0, medium: 0, low: 0 });
 
   useSeo({
     title: "Hardening",
@@ -29,16 +46,22 @@ export default function HardeningIndex() {
         <span className="blog-dim">Hardening</span>
       </nav>
 
-      <header className="blog-page-head blog-tac-indexhead">
-        <p className="blog-kicker">Hardening</p>
-        <h1 className="blog-display">
-          The same ground, <span className="blog-accent">read defensively.</span>
-        </h1>
-        <p className="blog-lead">
-          {hardening.length} guides covering {total} checks. Every one tells you what to
-          turn on, how to verify it actually took effect, and what it costs you to run.
-        </p>
-      </header>
+      <TacticsHeader
+        eyebrow="Hardening"
+        title="The same ground,"
+        accentWord="read defensively."
+        lead="Every one tells you what to turn on, how to verify it actually took effect, and what it costs you to run."
+        stats={[
+          { value: hardening.length, label: "guides" },
+          { value: total, label: "checks" },
+          { value: severityCounts.critical + severityCounts.high, label: "critical & high" },
+        ]}
+        bars={Object.entries(severityCounts).map(([key, value]) => ({
+          label: SEVERITY_LABEL[key],
+          value,
+          color: SEVERITY_COLOR[key],
+        }))}
+      />
 
       <ul className="blog-tac-hardening">
         {hardening.map((guide) => (

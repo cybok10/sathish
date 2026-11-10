@@ -1,6 +1,33 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useRouter } from "../router";
 import { ChevronRight } from "./Icons";
+
+const PANEL = [
+  {
+    id: "pentesting",
+    to: "/blog/tactics/pentesting",
+    title: "Pentesting tactics",
+    blurb:
+      "A walkthrough for every protocol and service worth attacking, from recon through to post-exploitation and the fix.",
+    meta: "service protocols",
+  },
+  {
+    id: "tools",
+    to: "/blog/tactics/tools",
+    title: "Tools",
+    blurb:
+      "The toolkit, explained honestly — what each tool is for, how to install it, and where it gives false results.",
+    meta: "offensive tools",
+  },
+  {
+    id: "hardening",
+    to: "/blog/tactics/hardening",
+    title: "Hardening",
+    blurb:
+      "The defensive side of the same work: what to turn on, how to verify it, and what each control actually stops.",
+    meta: "defensive guides",
+  },
+];
 
 /**
  * The counts are loaded on demand rather than imported statically — the
@@ -19,36 +46,6 @@ function loadCounts() {
   return countsPromise;
 }
 
-const PANEL = [
-  {
-    id: "pentesting",
-    to: "/blog/tactics/pentesting",
-    title: "Pentesting tactics",
-    blurb:
-      "A walkthrough for every protocol and service worth attacking, from recon through to post-exploitation and the fix.",
-    meta: "service protocols",
-    icon: "crosshair",
-  },
-  {
-    id: "tools",
-    to: "/blog/tactics/tools",
-    title: "Tools",
-    blurb:
-      "The toolkit, explained honestly — what each tool is for, how to install it, and where it gives false results.",
-    meta: "offensive tools",
-    icon: "terminal",
-  },
-  {
-    id: "hardening",
-    to: "/blog/tactics/hardening",
-    title: "Hardening",
-    blurb:
-      "The defensive side of the same work: what to turn on, how to verify it, and what each control actually stops.",
-    meta: "defensive guides",
-    icon: "shield",
-  },
-];
-
 /**
  * The "Tactics" dropdown.
  *
@@ -56,6 +53,10 @@ const PANEL = [
  * Escape or an outside click, and keeps the focus ring honest by keeping
  * the trigger in the tab order rather than hiding the panel behind
  * :hover alone.
+ *
+ * The panel sits below the trigger, so the pointer has to cross a gap to
+ * reach it. Closing is therefore deferred by a short delay, and the gap
+ * is bridged in CSS — otherwise the menu disappears before you can click.
  */
 export default function TacticsDropdown() {
   const { path } = useRouter();
@@ -63,6 +64,7 @@ export default function TacticsDropdown() {
   const [counts, setCounts] = useState(null);
   const wrapRef = useRef(null);
   const triggerRef = useRef(null);
+  const closeTimer = useRef(null);
 
   const isActive = path.startsWith("/blog/tactics");
 
@@ -101,12 +103,24 @@ export default function TacticsDropdown() {
     setOpen(false);
   }, [path]);
 
+  useEffect(() => () => clearTimeout(closeTimer.current), []);
+
+  const show = useCallback(() => {
+    clearTimeout(closeTimer.current);
+    setOpen(true);
+  }, []);
+
+  const hide = useCallback(() => {
+    clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => setOpen(false), 180);
+  }, []);
+
   return (
     <div
       className="blog-dropdown"
       ref={wrapRef}
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      onMouseEnter={show}
+      onMouseLeave={hide}
     >
       <button
         type="button"
@@ -116,6 +130,7 @@ export default function TacticsDropdown() {
         aria-haspopup="true"
         aria-current={isActive ? "page" : undefined}
         onClick={() => setOpen((value) => !value)}
+        onFocus={show}
       >
         Tactics
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -124,13 +139,20 @@ export default function TacticsDropdown() {
       </button>
 
       {open ? (
-        <div className="blog-dropdown__panel" role="menu" aria-label="Tactics">
+        <div
+          className="blog-dropdown__panel"
+          role="menu"
+          aria-label="Tactics"
+          onMouseEnter={show}
+          onMouseLeave={hide}
+        >
           {PANEL.map((item) => (
             <Link
               key={item.id}
               to={item.to}
               role="menuitem"
               className="blog-dropdown__card"
+              onFocus={show}
             >
               <span className="blog-dropdown__title">
                 {item.title}

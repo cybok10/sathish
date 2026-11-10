@@ -37,6 +37,9 @@ export function BlogHeader() {
 
   const isBlogIndex = path === "/blog";
   const isSearch = path === "/blog/search";
+  // The tactics library lives under /blog but has its own nav entry, so it
+  // must not also light up the "Blog" link.
+  const isTactics = path.startsWith("/blog/tactics");
 
   return (
     <header className="blog-header">
@@ -52,7 +55,9 @@ export function BlogHeader() {
         <nav className="blog-nav" aria-label="Primary">
           {NAV.map((item) => {
             const isCurrent =
-              item.label === "Blog" ? isBlogIndex || isSearch || path.startsWith("/blog/") : false;
+              item.label === "Blog"
+                ? isBlogIndex || isSearch || (path.startsWith("/blog/") && !isTactics)
+                : false;
             return (
               <a
                 key={item.label}

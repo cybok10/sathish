@@ -7,6 +7,7 @@ import { API_BASE, absoluteUrl } from "../base";
 import { CompactPost, PostCard } from "../components/PostCard";
 import { Pagination } from "../components/Pagination";
 import { NewsletterSection } from "../components/Newsletter";
+import TacticsPromo from "../components/TacticsPromo";
 import { ErrorState, LoadingState } from "../components/States";
 import { ArrowRight, RssIcon, SearchIcon, ShieldIcon } from "../components/Icons";
 
@@ -150,6 +151,8 @@ export default function BlogHome() {
 
         {!error && (
           <>
+            <TacticsPromo />
+
             <section className="blog-section" aria-labelledby="featured-title">
               <div className="blog-section-head">
                 <div>

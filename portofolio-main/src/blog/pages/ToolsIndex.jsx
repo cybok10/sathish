@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "../router";
 import { searchTools, tools, toolsByCategory } from "../data/tactics";
 import { useSeo } from "../seo";
+import TacticsHeader from "../components/TacticsHeader";
 import { ArrowRight, SearchIcon } from "../components/Icons";
 
 /**
@@ -39,17 +40,24 @@ export default function ToolsIndex() {
         <span className="blog-dim">Tools</span>
       </nav>
 
-      <header className="blog-page-head blog-tac-indexhead">
-        <p className="blog-kicker">Tools</p>
-        <h1 className="blog-display">
-          The toolkit, <span className="blog-accent">explained honestly.</span>
-        </h1>
-        <p className="blog-lead">
-          {tools.length} tools that earn their place in an assessment — what each one is
-          for, how to install it, the commands that matter, and where it will happily
-          give you the wrong answer.
-        </p>
-      </header>
+      <TacticsHeader
+        eyebrow="Tools"
+        title="The toolkit,"
+        accentWord="explained honestly."
+        lead="The tools that earn their place in an assessment — what each one is for, how to install it, the commands that matter, and where it will happily give you the wrong answer."
+        stats={[
+          { value: tools.length, label: "tools" },
+          { value: toolsByCategory().length, label: "categories" },
+          { value: toolsByCategory()[0]?.tools.length ?? 0, label: "largest group" },
+        ]}
+        bars={toolsByCategory()
+          .slice(0, 6)
+          .map((group) => ({
+            label: group.label,
+            value: group.tools.length,
+            color: "#a78bfa",
+          }))}
+      />
 
       <div className="blog-tac-toolbar">
         <label className="blog-tac-search blog-tac-search--wide">
