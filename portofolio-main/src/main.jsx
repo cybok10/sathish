@@ -17,6 +17,16 @@ const basePath = import.meta.env.BASE_URL.replace(/\/$/, '');
 const isMentorshipPage = window.location.pathname.replace(/\/$/, '') === `${basePath}/mentorship`;
 const isBlogPage = new RegExp(`^${basePath}/(blog|admin)(/|$)`).test(window.location.pathname);
 
+if (isMentorshipPage) {
+  document.title = "Cybersecurity Mentorship | Sathish M";
+  document
+    .querySelector('meta[name="description"]')
+    ?.setAttribute(
+      "content",
+      "1:1 cybersecurity mentorship — structured learning tracks, practical labs in authorised environments, and career direction. Book a scoping call with Sathish M."
+    );
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     {isBlogPage ? (
