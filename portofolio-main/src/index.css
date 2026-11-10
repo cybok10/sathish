@@ -1,8 +1,33 @@
 @import "tailwindcss";
 
+/* ==================================================================
+   PORTFOLIO THEME
+   The same violet / signal-cyan identity the blog and the mentorship
+   page use. Colours are stored as channels so the whole site can be
+   re-tuned from this block alone.
+   ================================================================== */
+:root {
+  --pf-bg: #07060f;
+  --pf-bg-2: #0d0b1c;
+  --pf-surface: #12101f;
+  --pf-surface-2: #1a1730;
+  --pf-line: rgba(167, 160, 210, 0.16);
+  --pf-line-strong: rgba(167, 160, 210, 0.3);
+  --pf-accent: #7c5cff;
+  --pf-accent-dim: #6d4ae0;
+  --pf-accent-2: #3dd9ff;
+  --pf-text: #f4f2ff;
+  --pf-muted: #a9a4c2;
+  --pf-dim: #7f7a9b;
+  --pf-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace;
+  --pf-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @layer base {
   body {
     font-family: "Poppins", sans-serif;
+    background-color: var(--pf-bg);
+    color: var(--pf-text);
   }
 }
 
@@ -20,7 +45,7 @@
   top: 0.5rem;
   bottom: 0.5rem;
   width: 2px;
-  background: linear-gradient(to bottom, #8b5cf6, #1f97a6, transparent);
+  background: linear-gradient(to bottom, var(--pf-accent), var(--pf-accent-2), transparent);
 }
 
 .timeline-entry {
@@ -34,15 +59,15 @@
   height: 1rem;
   left: -2.28rem;
   top: 1.5rem;
-  border: 3px solid #a78bfa;
+  border: 3px solid var(--pf-accent);
   border-radius: 9999px;
-  background: #18181b;
+  background: var(--pf-surface);
   box-shadow: 0 0 18px rgba(167, 139, 250, 0.7);
 }
 
 .timeline-card {
   padding: 1.5rem;
-  border: 1px solid #3f3f46;
+  border: 1px solid var(--pf-line-strong);
   border-radius: 0.75rem;
   background: rgba(24, 24, 27, 0.72);
   backdrop-filter: blur(12px);
@@ -69,7 +94,7 @@
   width: min(360px, 82vw);
   min-height: 250px;
   padding: 1.5rem;
-  border: 1px solid #3f3f46;
+  border: 1px solid var(--pf-line-strong);
   border-radius: 0.75rem;
   background: rgba(24, 24, 27, 0.8);
   backdrop-filter: blur(12px);

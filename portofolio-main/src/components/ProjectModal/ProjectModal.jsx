@@ -35,12 +35,12 @@ const ProjectModal = ({ isOpen, onClose, project }) => {
     // Overlay
     <div
       onClick={handleClose}
-      className="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50 p-4 transition-opacity duration-300"
+      className="fixed inset-0 bg-black/80 backdrop-blur-sm flex justify-center items-center z-50 p-4 transition-opacity duration-300"
     >
       {/* Modal Content */}
       <div
         onClick={(e) => e.stopPropagation()} // Mencegah modal tertutup saat diklik di dalam
-        className={`bg-zinc-900 border border-violet-500/50 rounded-2xl shadow-2xl shadow-violet-500/20 w-full max-w-lg transform transition-transform duration-300 ${isClosing ? 'animate-out' : 'animate-in'}`}
+        className={`bg-[var(--pf-surface)] border border-[var(--pf-line-strong)] rounded-2xl shadow-2xl shadow-black/60 w-full max-w-lg transform transition-transform duration-300 ${isClosing ? 'animate-out' : 'animate-in'}`}
       >
         {/* --- GAMBAR PROYEK --- */}
         <img 
@@ -54,22 +54,41 @@ const ProjectModal = ({ isOpen, onClose, project }) => {
                 <h2 className="text-2xl font-bold text-white">{project.title}</h2>
                 <button
                     onClick={handleClose}
-                    className="text-zinc-400 hover:text-white transition-colors p-2 rounded-full hover:bg-zinc-700 -mt-2 -mr-2"
+                    className="text-[var(--pf-dim)] hover:text-white transition-colors p-2 rounded-full hover:bg-[var(--pf-surface-2)] -mt-2 -mr-2"
+                    aria-label="Close"
                 >
                     <FiX size={24} />
                 </button>
             </div>
 
             {/* --- DESKRIPSI LENGKAP --- */}
-            <p className="text-zinc-300 text-base leading-relaxed">
+            {project.subtitle ? (
+              <p className="text-[var(--pf-accent-2)] font-mono text-xs -mt-2">{project.subtitle}</p>
+            ) : null}
+
+            {/* --- DESKRIPSI LENGKAP --- */}
+            <p className="text-[var(--pf-muted)] text-base leading-relaxed">
                 {project.fullDescription}
             </p>
+
+            {project.tags?.length ? (
+              <ul className="flex flex-wrap gap-1.5">
+                {project.tags.map((tag) => (
+                  <li
+                    key={tag}
+                    className="font-mono text-[0.68rem] px-2 py-1 rounded border border-[var(--pf-line)] bg-[var(--pf-surface-2)] text-[var(--pf-muted)]"
+                  >
+                    {tag}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
 
             <a
                 href={project.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 inline-flex items-center justify-center gap-2 font-semibold bg-violet-600 p-3 px-5 rounded-full w-full cursor-pointer border border-transparent hover:bg-violet-700 transition-colors"
+                className="mt-4 inline-flex items-center justify-center gap-2 font-semibold bg-[var(--pf-accent)] text-[var(--pf-bg)] p-3 px-5 rounded-full w-full cursor-pointer border border-transparent hover:bg-[var(--pf-accent-dim)] transition-colors"
             >
                 <FiGithub />
                 <span>Source Code</span>

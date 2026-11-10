@@ -1,0 +1,202 @@
+/* ==================================================================
+   SELECTED WORK
+   Scoped under .pf-* so the rest of the portfolio is untouched.
+   ================================================================== */
+
+.pf-projects {
+  display: grid;
+  /* Four projects read best as a 2x2 block rather than three across
+     and one alone on the next row. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pf-project {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  background: var(--pf-surface);
+  border: 1px solid var(--pf-line);
+  border-radius: 1.35rem;
+  transition: border-color 0.3s var(--pf-ease), transform 0.3s var(--pf-ease),
+    box-shadow 0.3s var(--pf-ease);
+}
+.pf-project:hover {
+  border-color: var(--pf-accent);
+  transform: translateY(-5px);
+  box-shadow: 0 24px 60px -30px var(--pf-accent);
+}
+.pf-project:focus-visible {
+  outline: 2px solid var(--pf-accent);
+  outline-offset: 3px;
+}
+
+.pf-project__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  background: var(--pf-surface-2);
+}
+.pf-project__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.6s var(--pf-ease), filter 0.6s var(--pf-ease);
+}
+.pf-project:hover .pf-project__media img {
+  transform: scale(1.06);
+  filter: saturate(1.15);
+}
+.pf-project__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 45%, rgba(7, 6, 15, 0.9) 100%);
+}
+.pf-project__type {
+  position: absolute;
+  z-index: 1;
+  left: 0.95rem;
+  bottom: 0.85rem;
+  font-family: var(--pf-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pf-accent);
+  padding: 0.28rem 0.6rem;
+  border-radius: 5px;
+  border: 1px solid color-mix(in srgb, var(--pf-accent) 34%, transparent);
+  background: rgba(7, 6, 15, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.pf-project__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 1.15rem 1.25rem 0.9rem;
+  flex: 1;
+}
+.pf-project__title {
+  color: var(--pf-text);
+  font-size: 1.1rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+.pf-project__subtitle {
+  color: var(--pf-accent);
+  font-family: var(--pf-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+}
+.pf-project__desc {
+  color: var(--pf-muted);
+  font-size: 0.86rem;
+  line-height: 1.7;
+  margin-top: 0.25rem;
+}
+
+.pf-project__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1.25rem 1.15rem;
+  border-top: 1px solid var(--pf-line);
+}
+.pf-project__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.pf-project__tag {
+  font-family: var(--pf-mono);
+  font-size: 0.68rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 5px;
+  color: var(--pf-muted);
+  border: 1px solid var(--pf-line);
+  background: var(--pf-surface-2);
+}
+.pf-project__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+  color: var(--pf-accent);
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: gap 0.25s var(--pf-ease);
+}
+.pf-project:hover .pf-project__cta {
+  gap: 0.6rem;
+}
+
+/* ==================================================================
+   SECTION HEADER
+   ================================================================== */
+.pf-section-head {
+  max-width: 62ch;
+  margin: 0 auto 3rem;
+  text-align: center;
+}
+.pf-section-head__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-family: var(--pf-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--pf-accent);
+}
+.pf-section-head__eyebrow::before {
+  content: "";
+  width: 1.5rem;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--pf-accent));
+}
+.pf-section-head h2 {
+  margin: 0.7rem 0 0.8rem;
+  font-size: clamp(2rem, 4.4vw, 3.1rem);
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  color: var(--pf-text);
+}
+.pf-section-head h2 em {
+  font-style: normal;
+  background: linear-gradient(100deg, var(--pf-accent), var(--pf-accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--pf-accent);
+}
+.pf-section-head p {
+  color: var(--pf-muted);
+  font-size: 0.98rem;
+  line-height: 1.75;
+}
+
+@media (max-width: 860px) {
+  .pf-projects { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .pf-project__foot { align-items: flex-start; }
+  .pf-project__cta { margin-left: 0; }
+}

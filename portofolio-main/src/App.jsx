@@ -7,7 +7,8 @@ import SplitText from "./components/SplitText/SplitText";
 import Lanyard from "./components/Lanyard/Lanyard";
 import GlassIcons from "./components/GlassIcons/GlassIcons";
 import { listTools, listProyek } from "./data";
-import ChromaGrid from "./components/ChromaGrid/ChromaGrid";
+import ProjectGrid from "./components/ProjectGrid/ProjectGrid";
+import "./components/ProjectGrid/ProjectGrid.css";
 import ProjectModal from "./components/ProjectModal/ProjectModal"; // <-- IMPORT MODAL
 import Aurora from "./components/Aurora/Aurora";
 import AOS from 'aos';
@@ -43,7 +44,7 @@ function App() {
     <>
       <div className="absolute top-0 left-0 w-full h-full -z-10 ">
         <Aurora
-          colorStops={["#577870", "#1F97A6", "#127B99"]}
+          colorStops={["#7c5cff", "#3dd9ff", "#1f5fd2"]}
           blend={0.5}
           amplitude={1.0}
           speed={0.5}
@@ -185,22 +186,20 @@ function App() {
         {/* tentang */}
 
         {/* Proyek */}
-        <div className="proyek mt-32 py-10" id="project" data-aos="fade-up" data-aos-duration="1000" data-aos-once="true"></div>
-        <h1 className="text-center text-4xl font-bold mb-2" data-aos="fade-up" data-aos-duration="1000" data-aos-once="true">Project</h1>
-        <p className="text-base/loose text-center opacity-50" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="300" data-aos-once="true">Practical security labs, detection pipelines, and secure engineering projects.</p>
-        <div className="proyek-box mt-14" >
-
-          <div style={{ height: 'auto', position: 'relative' }} data-aos="fade-up" data-aos-duration="1000" data-aos-delay="400" data-aos-once="true" >
-            <ChromaGrid
-              items={listProyek}
-              onItemClick={handleProjectClick} // Kirim fungsi untuk handle klik
-              radius={500}
-              damping={0.45}
-              fadeOut={0.6}
-              ease="power3.out"
-            />
+        <section className="mt-32" id="project">
+          <div className="pf-section-head" data-aos="fade-up" data-aos-duration="900" data-aos-once="true">
+            <span className="pf-section-head__eyebrow">Selected work</span>
+            <h2>
+              Things I built, <em>broke and shipped.</em>
+            </h2>
+            <p>
+              Practical security labs, detection pipelines and secure engineering
+              projects — each one built to be run, not just looked at.
+            </p>
           </div>
-        </div>
+
+          <ProjectGrid projects={listProyek} onSelect={handleProjectClick} />
+        </section>
         {/* Proyek */}
 
         <section className="mt-32" id="experience">
