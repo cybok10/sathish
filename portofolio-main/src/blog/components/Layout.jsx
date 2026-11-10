@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { API_BASE, BASE, withBase } from "../base";
 import { Link, useRouter } from "../router";
+import TacticsDropdown from "./TacticsDropdown";
 import {
   CloseIcon,
   GithubIcon,
@@ -62,6 +63,7 @@ export function BlogHeader() {
               </a>
             );
           })}
+          <TacticsDropdown />
         </nav>
 
         <div className="blog-header-actions">
@@ -104,6 +106,16 @@ export function BlogHeader() {
               {item.label}
             </a>
           ))}
+          <span className="blog-mobile-nav__label">Tactics</span>
+          <a href={`${BASE || ""}/blog/tactics/pentesting`} onClick={() => setOpen(false)}>
+            Pentesting tactics
+          </a>
+          <a href={`${BASE || ""}/blog/tactics/tools`} onClick={() => setOpen(false)}>
+            Tools
+          </a>
+          <a href={`${BASE || ""}/blog/tactics/hardening`} onClick={() => setOpen(false)}>
+            Hardening
+          </a>
         </div>
       )}
     </header>
@@ -151,6 +163,16 @@ export function BlogFooter() {
               <a href={withBase("/blog/category/application-security")}>Application security</a>
               <a href={withBase("/blog/category/detection-engineering")}>Detection engineering</a>
               <a href={withBase("/blog/category/career-mentorship")}>Career &amp; mentorship</a>
+            </div>
+          </div>
+
+          <div>
+            <h3>Tactics</h3>
+            <div className="blog-footer-links">
+              <a href={withBase("/blog/tactics")}>Tactics library</a>
+              <a href={withBase("/blog/tactics/pentesting")}>Pentesting tactics</a>
+              <a href={withBase("/blog/tactics/tools")}>Tools</a>
+              <a href={withBase("/blog/tactics/hardening")}>Hardening</a>
             </div>
           </div>
 

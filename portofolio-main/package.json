@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "api": "node server/index.js",
     "blog:export": "node scripts/export-static.mjs",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "tactics:validate": "node scripts/validate-tactics.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.6.1",

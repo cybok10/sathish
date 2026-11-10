@@ -4,6 +4,11 @@ import crypto from "node:crypto";
 import { config, ALLOWED_UPLOAD_TYPES } from "./config.js";
 import { getDatabase } from "./db.js";
 import {
+  hardening as tacticsHardening,
+  services as tacticsServices,
+  tools as tacticsTools,
+} from "../src/blog/data/tactics.js";
+import {
   clearCookie,
   createSession,
   destroySession,
@@ -248,6 +253,35 @@ ${items}
 </rss>`;
 }
 
+/**
+ * The tactics library is static content that lives in the repository
+ * rather than in the database, so its URLs are generated from the data
+ * modules directly.
+ */
+function tacticsUrls(base, now) {
+  return [
+    { loc: `${base}/blog/tactics`, lastmod: now, priority: "0.8" },
+    { loc: `${base}/blog/tactics/pentesting`, lastmod: now, priority: "0.8" },
+    { loc: `${base}/blog/tactics/tools`, lastmod: now, priority: "0.8" },
+    { loc: `${base}/blog/tactics/hardening`, lastmod: now, priority: "0.8" },
+    ...tacticsServices.map((service) => ({
+      loc: `${base}/blog/tactics/pentesting/services/${service.slug}`,
+      lastmod: now,
+      priority: "0.7",
+    })),
+    ...tacticsTools.map((tool) => ({
+      loc: `${base}/blog/tactics/tools/${tool.slug}`,
+      lastmod: now,
+      priority: "0.7",
+    })),
+    ...tacticsHardening.map((guide) => ({
+      loc: `${base}/blog/tactics/hardening/${guide.slug}`,
+      lastmod: now,
+      priority: "0.6",
+    })),
+  ];
+}
+
 function buildSitemap(db) {
   const base = `${config.siteUrl}${config.basePath}`;
   const now = nowIso();
@@ -291,6 +325,7 @@ function buildSitemap(db) {
       lastmod: author.updated || now,
       priority: "0.5",
     })),
+    ...tacticsUrls(base, now),
   ];
 
   return `<?xml version="1.0" encoding="UTF-8"?>
