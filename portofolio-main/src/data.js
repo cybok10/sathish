@@ -1,4 +1,5 @@
-const securityAsset = (path) => `/portofolio/assets/sathish/images/${path}`;
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+const securityAsset = (path) => `${basePath}/assets/sathish/images/${path}`;
 
 export const listTools = [
   { id: 1, gambar: securityAsset("icons/shield.png"), nama: "Application & Web Security", ket: "Threat modelling · OWASP Top 10 · API security", dad: "100" },

@@ -2,19 +2,21 @@ import "remixicon/fonts/remixicon.css";
 import Dock from "./Dock/Dock";
 import { VscHome, VscArchive, VscAccount } from "react-icons/vsc";
 
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 const Footer = () => {
   const items = [
     { icon: <VscHome size={18} />, label: "Home", onClick: () => {
-        const isMentorshipPage = window.location.pathname.replace(/\/$/, '') === "/portofolio/mentorship";
+        const isMentorshipPage = window.location.pathname.replace(/\/$/, '') === `${basePath}/mentorship`;
         if (isMentorshipPage) {
-          window.location.assign("/portofolio/");
+          window.location.assign(`${basePath}/`);
           return;
         }
         document.getElementById("home")?.scrollIntoView({ behavior: "smooth" });
       } },
     { icon: <VscAccount size={18} />, label: "About Me", onClick: () => document.getElementById("about")?.scrollIntoView({ behavior: "smooth" }) },
     { icon: <VscArchive size={18} />, label: "Project", onClick: () => document.getElementById("project")?.scrollIntoView({ behavior: "smooth" }) },
-    { icon: <VscArchive size={18} />, label: "Mentorship", onClick: () => window.location.assign("/portofolio/mentorship") },
+    { icon: <VscArchive size={18} />, label: "Mentorship", onClick: () => window.location.assign(`${basePath}/mentorship`) },
   ];
 
   return (

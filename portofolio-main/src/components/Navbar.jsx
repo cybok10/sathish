@@ -40,7 +40,7 @@ const Navbar = ({ hidden = false }) => {
         <li><a href="#about" className="sm:text-lg text-base font-medium">About</a></li>
         <li><a href="#project" className="sm:text-lg text-base font-medium">Projects</a></li>
         <li><a href="#experience" className="sm:text-lg text-base font-medium">Experience</a></li>
-        <li><a href="/portofolio/mentorship" className="sm:text-lg text-base font-medium">Mentorship</a></li>
+        <li><a href={`${basePath}/mentorship`} className="sm:text-lg text-base font-medium">Mentorship</a></li>
         <li><a href={`${basePath}/blog`} className="sm:text-lg text-base font-medium">Blog</a></li>
         <li><a href={`${basePath}/blog/tactics`} className="sm:text-lg text-base font-medium">Tactics</a></li>
         <li><a href="#contact" className="sm:text-lg text-base font-medium">Contact</a></li>

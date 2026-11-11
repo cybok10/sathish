@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+
+// The deployment base, so asset paths follow wherever the site is hosted.
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
 import ProfileCard from "./components/ProfileCard/ProfileCard";
 import ShinyText from "./components/ShinyText/ShinyText";
 import BlurText from "./components/BlurText/BlurText";
@@ -35,7 +38,7 @@ function App() {
 
     if (isReload) {
       // Ambil path tanpa hash
-      const baseUrl = window.location.origin + "/portofolio/";
+      const baseUrl = window.location.origin + `${basePath}/`;
       window.location.replace(baseUrl);
     }
   }, []);
@@ -55,7 +58,7 @@ function App() {
         <div className="hero grid md:grid-cols-2 items-center pt-10 xl:gap-0 gap-6 grid-cols-1">
           <div className="animate__animated animate__fadeInUp animate__delay-3s">
             <div className="flex items-center gap-3 mb-6 bg bg-zinc-800 w-fit p-4 rounded-2xl">
-              <img src="/portofolio/assets/sathish/images/icons/shield.png" className="w-10 rounded-md" alt="Cybersecurity shield" />
+              <img src={`${basePath}/assets/sathish/images/icons/shield.png`} className="w-10 rounded-md" alt="Cybersecurity shield" />
               <q>Security is not an afterthought.</q>
             </div>
             <h1 className="text-5xl font-bold mb-6">
@@ -70,7 +73,7 @@ function App() {
             />
             <div className="flex items-center sm:gap-4 gap-2">
               <a 
-                href="/portofolio/assets/sathish/resume.pdf" 
+                href={`${basePath}/assets/sathish/resume.pdf`} 
                 download="Sathish_M_Resume.pdf" 
                 className="font-semibold bg-[#1a1a1a] p-4 px-6 rounded-full border border-gray-700 hover:bg-[#222] transition-colors"
               >
@@ -89,7 +92,7 @@ function App() {
               handle="cybok10"
               status="Online"
               contactText="Contact Me"
-              avatarUrl="/portofolio/assets/sathish/sathish1.png"
+              avatarUrl={`${basePath}/assets/sathish/sathish1.png`}
               showUserInfo={true}
               enableTilt={true}
               enableMobileTilt={false}
@@ -251,8 +254,8 @@ function App() {
           <h1 className="text-center text-4xl font-bold mb-2" data-aos="fade-up" data-aos-once="true">Mentorship & Impact</h1>
           <p className="text-base/loose text-center opacity-50 mb-10">Training the next generation of ethical hackers through hands-on labs and practical security education.</p>
           <div className="grid md:grid-cols-2 gap-6 mb-10">
-            <img src="/portofolio/assets/sathish/images/students/classroom-session.jpeg" alt="Sathish leading a cybersecurity training session" className="w-full h-72 object-cover rounded-xl border border-zinc-700" loading="lazy" />
-            <img src="/portofolio/assets/sathish/images/students/group-photo.jpeg" alt="Students at RedTeam Hacker Academy" className="w-full h-72 object-cover rounded-xl border border-zinc-700" loading="lazy" />
+            <img src={`${basePath}/assets/sathish/images/students/classroom-session.jpeg`} alt="Sathish leading a cybersecurity training session" className="w-full h-72 object-cover rounded-xl border border-zinc-700" loading="lazy" />
+            <img src={`${basePath}/assets/sathish/images/students/group-photo.jpeg`} alt="Students at RedTeam Hacker Academy" className="w-full h-72 object-cover rounded-xl border border-zinc-700" loading="lazy" />
           </div>
           <div className="reviews-marquee" aria-label="Student reviews">
             <div className="reviews-track">
