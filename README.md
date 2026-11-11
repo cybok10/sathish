@@ -1,33 +1,61 @@
-# Sathish M portfolio
+# Portfolio Web — [Sathish M / cybok10]
 
-React + Vite frontend with a small, dependency-free Python API for approved student reviews. It is built from the supplied résumé.
+Selamat datang di portofolio web pribadi saya! 🌐  
+Dibuat dengan React + Vite, ini adalah showcase dari project, skill, dan karya yang ingin saya bagikan.
 
-## Run locally
+##  Struktur Project
 
+- `public/` — file statis (favicon, assets, dsb.)  
+- `src/` — code utama React (komponen, utilitas, dsb.)  
+- `index.html` — entry point halaman web  
+- `package.json` & `package-lock.json` — manajemen dependencies dan script  
+- `vite.config.js` — konfigurasi build dan dev server Vite  
+- `eslint.config.js` — aturan linting agar kodenya tetap bersih dan konsisten  
+
+##  Fitur Utama
+
+- Dibangun dengan **React + Vite** — ringan, cepat reload, dan performa build optimal  
+- **ESLint** telah terkonfigurasi agar coding style tetap rapi  
+- Struktur modular dan siap dikembangkan—bisa ditambahkan halaman “About”, “Projects”, dsb.
+
+##  Cara Jalankan
+
+1. Clone repository ini:
+```bash
+git clone https://github.com/cybok10/sathish.git
+cd sathish/portofolio-main
+````
+
+2. Install dependencies:
 ```bash
 npm install
-python3 api/server.py
-```
+````
 
-In a second terminal:
-
+3. Jalankan server lokal dengan hot reload:
 ```bash
 npm run dev
-```
+````
 
-Open the Vite URL shown in the terminal (normally `http://localhost:5173`). The React frontend reads approved reviews from the Python API at `http://localhost:8001/api/testimonials`.
+4. Buat versi production:
+```bash
+npm run build
+````
 
-Build a production frontend with `npm run build`.
+## &#x20;Quick Preview
 
-## Add student reviews
+Jika sudah di-deploy (contoh: GitHub Pages, Netlify, Vercel), kamu bisa tambahkan link deploy di sini, misalnya:
+[🔗 Lihat versi live](https://username.github.io/portofolio/)
 
-Edit `testimonials.json`. Only entries with `"approved": true` render. Obtain explicit consent before publishing a name, quotation, or image.
+## Tentang Saya
 
-## Add workshop photos
+Hi, I'm Sathish M (GitHub: `cybok10`).
+Saya seorang Developer yang suka bikin aplikasi web ringan dengan tampilan modern dan performa tinggi. Scroll aja di project saya, dan jangan sungkan untuk reach out kalau ada pertanyaan!
 
-Place consented images in `public/images/students/` and replace the visual placeholder in `index.html` with an image element that includes meaningful alt text.
+* **Email:** [sathish1012cybok@gmail.com](mailto:sathish1012cybok@gmail.com)
+* **LinkedIn:** [linkedin.com/in/amsathish](https://www.linkedin.com/in/amsathish/)
+* **GitHub:** [github.com/cybok10](https://github.com/cybok10)
 
-## Resume
+---
 
-The downloadable source is `public/resume.pdf`.
-# sathish
+
+[1]: https://github.com/cybok10/sathish "GitHub - cybok10/sathish"

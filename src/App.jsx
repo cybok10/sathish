@@ -1,807 +1,378 @@
-import { useEffect, useState } from 'react';
-import initialReviews from '../testimonials.json';
+import { useState, useEffect } from "react";
 
-const projects = [
-  {
-    id: '01',
-    num: '01 / 04',
-    category: 'SECURITY LAB',
-    title: 'VulnLab — Vulnerable Web App for Pentesters',
-    tagline: 'CTF training target with automated scoring',
-    description: 'Deliberately vulnerable web application covering SQLi, XSS, IDOR, CSRF, Command Injection, and File Upload in an isolated Docker environment with automated CTF-style scoring.',
-    metrics: '6 Attack Vectors · Isolated Docker CTF',
-    tags: ['Docker', 'CTF Scoring', 'Web Security', 'OWASP'],
-    accent: 'var(--lime)',
-    icon: '/images/icons/target.png',
-    linkText: 'Explore Lab ↗',
-    href: '#contact',
-  },
-  {
-    id: '02',
-    num: '02 / 04',
-    category: 'NETWORK DEFENSE',
-    title: 'AI-Driven Network Intrusion Detection System',
-    tagline: 'Deep packet anomaly classifier & alert harness',
-    description: 'Machine learning-based IDS utilizing Scikit-learn and TensorFlow on live network traffic captures, tightly integrated with Snort and Wireshark for deep packet inspection and automated alerting.',
-    metrics: 'TensorFlow ML · Snort Rule Engine',
-    tags: ['Python', 'TensorFlow', 'Snort', 'Wireshark'],
-    accent: 'var(--purple)',
-    icon: '/images/icons/setting.png',
-    linkText: 'View Pipeline ↗',
-    href: '#contact',
-  },
-  {
-    id: '03',
-    num: '03 / 04',
-    category: 'CLOUD SECURITY',
-    title: 'Centralized Log Monitoring — GCP & Wazuh',
-    tagline: 'Enterprise SOC pipeline with Python alert workflows',
-    description: 'Enterprise SIEM architecture ingesting Apache and system logs into Wazuh deployed on Google Cloud Platform. Features real-time dashboards, anomaly detection, and automated incident triage scripts.',
-    metrics: 'Wazuh SIEM · Real-time GCP Dashboards',
-    tags: ['GCP', 'Wazuh SIEM', 'Apache', 'Python'],
-    accent: 'var(--cyan)',
-    icon: '/images/icons/computer.png',
-    linkText: 'View Telemetry ↗',
-    href: '#contact',
-  },
-  {
-    id: '04',
-    num: '04 / 04',
-    category: 'SECURE PLATFORM',
-    title: 'SkillPath AI — Cybersecurity Roadmap Engine',
-    tagline: 'Personalized adversarial learning paths',
-    description: 'Secure AI platform built with FastAPI and SQLite that delivers personalized cybersecurity roadmaps guided by OWASP secure coding principles, role requirements, and interactive assessments.',
-    metrics: 'FastAPI Backend · OWASP Secure Architecture',
-    tags: ['FastAPI', 'SQLite', 'OWASP', 'REST API'],
-    accent: 'var(--gold)',
-    icon: '/images/icons/rocket.png',
-    linkText: 'Inspect Platform ↗',
-    href: '#contact',
-  },
-];
-
-const skillDomains = [
-  {
-    id: 'pentest',
-    title: 'Offensive Operations',
-    subtitle: 'RED TEAM & EXPLOITATION',
-    icon: '/images/icons/target.png',
-    iconAccent: '#7c3aed',
-    glow: 'rgba(124, 58, 237, 0.3)',
-    skills: [
-      { name: 'Penetration Testing', pct: 92 },
-      { name: 'Metasploit / Exploit Dev', pct: 88 },
-      { name: 'Burp Suite Pro', pct: 90 },
-      { name: 'Nmap & Recon', pct: 95 },
-      { name: 'Privilege Escalation', pct: 85 },
-      { name: 'Fuzzing & CVE Research', pct: 78 },
-    ],
-  },
-  {
-    id: 'web',
-    title: 'Web & API Defense',
-    subtitle: 'OWASP & APPLICATION SECURITY',
-    icon: '/images/icons/shield.png',
-    iconAccent: '#0ea5e9',
-    glow: 'rgba(14, 165, 233, 0.3)',
-    skills: [
-      { name: 'OWASP Top 10 Flaws', pct: 95 },
-      { name: 'SQLi, XSS, SSRF & CSRF', pct: 90 },
-      { name: 'JWT / OAuth 2.0 Audits', pct: 85 },
-      { name: 'API Security Testing', pct: 88 },
-      { name: 'OWASP ZAP / Postman', pct: 82 },
-      { name: 'Threat Modeling', pct: 80 },
-    ],
-  },
-  {
-    id: 'directory',
-    title: 'Active Directory & Net',
-    subtitle: 'DOMAIN ATTACKS & NETWORK PIVOTING',
-    icon: '/images/icons/key.png',
-    iconAccent: '#38bdf8',
-    glow: 'rgba(56, 189, 248, 0.3)',
-    skills: [
-      { name: 'AD Pentesting', pct: 88 },
-      { name: 'Kerberos Attacks', pct: 82 },
-      { name: 'NTLM Relay / Pass-Hash', pct: 85 },
-      { name: 'BloodHound / Impacket', pct: 80 },
-      { name: 'Network Pivoting', pct: 87 },
-      { name: 'DNS & SMB Enumeration', pct: 90 },
-    ],
-  },
-  {
-    id: 'siem',
-    title: 'Detection & SIEM',
-    subtitle: 'SOC TELEMETRY & MONITORING',
-    icon: '/images/icons/lock.png',
-    iconAccent: '#10b981',
-    glow: 'rgba(16, 185, 129, 0.3)',
-    skills: [
-      { name: 'Wazuh SIEM', pct: 92 },
-      { name: 'Log Ingestion & IOC Hunt', pct: 85 },
-      { name: 'Snort IDS Rules', pct: 80 },
-      { name: 'GCP Cloud Logging', pct: 78 },
-      { name: 'Incident Triage', pct: 88 },
-      { name: 'Splunk Basics', pct: 72 },
-    ],
-  },
-  {
-    id: 'code',
-    title: 'Security Engineering',
-    subtitle: 'AUTOMATION & TOOLING',
-    icon: '/images/icons/computer.png',
-    iconAccent: '#fbbf24',
-    glow: 'rgba(251, 191, 36, 0.3)',
-    skills: [
-      { name: 'Python 3', pct: 93 },
-      { name: 'Bash Scripting', pct: 90 },
-      { name: 'FastAPI / REST APIs', pct: 85 },
-      { name: 'Custom PoC Tools', pct: 88 },
-      { name: 'React / Frontend', pct: 80 },
-      { name: 'Linux & Git', pct: 95 },
-    ],
-  },
-];
-
-const navItems = [
-  ['Home', 'home'],
-  ['About', 'about'],
-  ['Skills', 'skills'],
-  ['Work', 'work'],
-  ['Certs', 'certifications'],
-  ['Mentorship', 'mentorship'],
-  ['Contact', 'contact'],
-];
+// The deployment base, so asset paths follow wherever the site is hosted.
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+import ProfileCard from "./components/ProfileCard/ProfileCard";
+import ShinyText from "./components/ShinyText/ShinyText";
+import BlurText from "./components/BlurText/BlurText";
+import ScrambledText from "./components/ScrambledText/ScrambledText";
+import SplitText from "./components/SplitText/SplitText";
+import Lanyard from "./components/Lanyard/Lanyard";
+import GlassIcons from "./components/GlassIcons/GlassIcons";
+import { listTools, listProyek } from "./data";
+import ProjectGrid from "./components/ProjectGrid/ProjectGrid";
+import "./components/ProjectGrid/ProjectGrid.css";
+import ProjectModal from "./components/ProjectModal/ProjectModal"; // <-- IMPORT MODAL
+import Aurora from "./components/Aurora/Aurora";
+import AOS from 'aos';
+import reviews from "./data/testimonials.json";
+import 'aos/dist/aos.css'; // You can also use <link> for styles
+// ..
+AOS.init();
 
 function App() {
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('sathish-theme') || 'dark';
-  });
-  const [filter, setFilter] = useState('all');
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [reviewTab, setReviewTab] = useState('cards'); // 'cards' or 'screenshots'
-  const [reviews, setReviews] = useState(initialReviews);
+  const [selectedProject, setSelectedProject] = useState(null); // null = modal tertutup
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('sathish-theme', theme);
-  }, [theme]);
-
-  useEffect(() => {
-    const apiUrl = import.meta.env.VITE_TESTIMONIALS_URL || 'http://localhost:8001/api/testimonials';
-    fetch(apiUrl)
-      .then(response => (response.ok ? response.json() : null))
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          setReviews(data.filter(item => item.approved));
-        }
-      })
-      .catch(() => {
-        // Fallback already preloaded from initialReviews
-      });
-  }, []);
-
-  const toggleTheme = () => {
-    setTheme(curr => (curr === 'dark' ? 'light' : 'dark'));
+  const handleProjectClick = (project) => {
+    setSelectedProject(project);
   };
 
-  const visibleDomains =
-    filter === 'all' ? skillDomains : skillDomains.filter(d => d.id === filter);
+  const handleCloseModal = () => {
+    setSelectedProject(null);
+  };
+  // -------------------------
+
+  useEffect(() => {
+    const isReload =
+      performance.getEntriesByType("navigation")[0]?.type === "reload";
+
+    if (isReload) {
+      // Ambil path tanpa hash
+      const baseUrl = window.location.origin + `${basePath}/`;
+      window.location.replace(baseUrl);
+    }
+  }, []);
 
   return (
     <>
-      <div className="cyber-grid" aria-hidden="true" />
-      <div className="noise" aria-hidden="true" />
+      <div className="absolute top-0 left-0 w-full h-full -z-10 ">
+        <Aurora
+          colorStops={["#7c5cff", "#3dd9ff", "#1f5fd2"]}
+          blend={0.5}
+          amplitude={1.0}
+          speed={0.5}
+        />
+      </div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-      {/* Header */}
-      <header className="site-header">
-        <a className="brand" href="#home" aria-label="Sathish M, home">
-          <span className="brand-mark">S</span>
-          <span className="brand-text">
-            Sathish<span className="brand-accent">.m</span>
-          </span>
-          <span className="status-badge" title="Active in offensive research">
-            <span className="pulse-dot" /> RED TEAM
-          </span>
-        </a>
-
-        <button
-          className="menu-toggle"
-          onClick={() => setMenuOpen(open => !open)}
-          aria-controls="site-nav"
-          aria-expanded={menuOpen}
-          aria-label="Toggle navigation"
-        >
-          <span />
-          <span />
-          <span />
-        </button>
-
-        <nav className={menuOpen ? 'open' : ''} id="site-nav" aria-label="Main navigation">
-          {navItems.map(([label, id]) => (
-            <a key={id} href={`#${id}`} onClick={() => setMenuOpen(false)}>
-              {label}
-            </a>
-          ))}
-        </nav>
-
-        <div className="header-actions">
-          <button
-            className="theme-toggle-btn"
-            onClick={toggleTheme}
-            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            title={`Toggle ${theme === 'dark' ? 'Light' : 'Dark'} mode`}
-          >
-            {theme === 'dark' ? '☼ Light' : '☾ Dark'}
-          </button>
-          <a className="header-contact" href="#contact">
-            Let’s Talk <span>↗</span>
-          </a>
-        </div>
-      </header>
-
-      <main>
-        {/* Hero Section */}
-        <section className="hero section" id="home">
-          <div className="hero-copy">
-            <div className="eyebrow">
-              <span className="pulse" />
-              <span>OFFENSIVE SECURITY RESEARCHER & MENTOR</span>
+        <div className="hero grid md:grid-cols-2 items-center pt-10 xl:gap-0 gap-6 grid-cols-1">
+          <div className="animate__animated animate__fadeInUp animate__delay-3s">
+            <div className="flex items-center gap-3 mb-6 bg bg-zinc-800 w-fit p-4 rounded-2xl">
+              <img src={`${basePath}/assets/sathish/images/icons/shield.png`} className="w-10 rounded-md" alt="Cybersecurity shield" />
+              <q>Security is not an afterthought.</q>
             </div>
-            <h1>
-              Security is not<br />
-              <em>an afterthought.</em>
+            <h1 className="text-5xl font-bold mb-6">
+              <ShinyText text="Hi, I'm Sathish M" disabled={false} speed={3} className='custom-class' />
             </h1>
-            <p className="hero-text">
-              I identify and dismantle vulnerabilities before they become critical breaches — across web, Active Directory, network, and cloud ecosystems.
-            </p>
-            <div className="hero-actions">
-              <a className="button primary" href="#work">
-                Explore Projects <span>↓</span>
+            <BlurText
+              text="Offensive cybersecurity researcher and mentor focused on discovering high-impact vulnerabilities before they become critical breaches."
+              delay={150}
+              animateBy="words"
+              direction="top"
+              className=" mb-6"
+            />
+            <div className="flex items-center sm:gap-4 gap-2">
+              <a 
+                href={`${basePath}/assets/sathish/resume.pdf`} 
+                download="Sathish_M_Resume.pdf" 
+                className="font-semibold bg-[#1a1a1a] p-4 px-6 rounded-full border border-gray-700 hover:bg-[#222] transition-colors"
+              >
+                <ShinyText text="Download CV" disabled={false} speed={3} className="custom-class" />
               </a>
-              <a className="button secondary" href="/resume.pdf" download="Sathish_M_Resume.pdf">
-                Download Résumé <span>↓</span>
-              </a>
-            </div>
-            <div className="hero-meta">
-              <span className="meta-item">
-                <i className="status-indicator" /> Tamil Nadu, India
-              </span>
-              <span className="meta-separator" />
-              <span className="meta-item">Available for Security Eng & Pentest Roles</span>
-            </div>
-          </div>
 
-          <div className="hero-visual" aria-label="Cyber threat matrix and offensive telemetry HUD">
-            <div className="radar-grid" />
-            <div className="radar-sweep" />
-            <div className="orbital orbital-one" />
-            <div className="orbital orbital-two" />
-            
-            <div className="core">
-              <div className="core-inner">
-                <img src="/images/icons/shield.png" alt="Cybersecurity Shield" className="hero-shield-icon" />
-                <small>RED TEAM / OFFENSIVE</small>
+              <a href="#project" className="font-semibold bg-[#1a1a1a] p-4 px-6 rounded-full border border-gray-700 hover:bg-[#222] transition-colors">
+                <ShinyText text="Explore My Projects" disabled={false} speed={3} className="custom-class" />
+              </a>
+            </div>
+
+          </div>
+          <div className="md:ml-auto animate__animated animate__fadeInUp animate__delay-4s">
+            <ProfileCard
+              name="Sathish M"
+              handle="cybok10"
+              status="Online"
+              contactText="Contact Me"
+              avatarUrl={`${basePath}/assets/sathish/sathish1.png`}
+              showUserInfo={true}
+              enableTilt={true}
+              enableMobileTilt={false}
+              onContactClick={() => console.log('Contact clicked')}
+            />
+          </div>
+        </div>
+        {/* tentang */}
+        <div className="mt-15 mx-auto w-full max-w-[1600px] rounded-3xl border-[5px] border-violet-500/40 shadow-[0_0_30px_rgba(168,85,247,0.4)] bg-gradient-to-br from-[#0a0a0a] via-[#111111] to-[#1a1a1a] p-6" id="about">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-10 pt-0 px-8" data-aos="fade-up" data-aos-duration="1000" data-aos-once="true">
+            <div className="basis-full md:basis-7/12 pr-0 md:pr-8 border-b md:border-b-0 md:border-r border-violet-500/30">
+              {/* Kolom kiri */}
+              <div className="flex-1 text-left">
+                <h2 className="text-3xl md:text-4xl font-bold text-white mb-5">
+                  About Me
+                </h2>
+
+                <BlurText
+                  text="I’m Sathish M, a cybersecurity researcher and penetration tester specializing in web application security, Active Directory, network pivoting, and SOC telemetry with Wazuh SIEM. I also mentor students through hands-on labs and CTF-style learning at RedTeam Hacker Academy."
+                  delay={150}
+                  animateBy="words"
+                  direction="top"
+                  className="text-base md:text-lg leading-relaxed mb-10 text-gray-300"
+                />
+
+                <div className="flex flex-col sm:flex-row items-center sm:justify-between text-center sm:text-left gap-y-8 sm:gap-y-0 mb-4 w-full">
+                  <div>
+                    <h1 className="text-3xl md:text-4xl mb-1">
+                      30<span className="text-violet-500">+</span>
+                    </h1>
+                    <p>Students Mentored</p>
+                  </div>
+                  <div>
+                    <h1 className="text-3xl md:text-4xl mb-1">
+                      3<span className="text-violet-500">+</span>
+                    </h1>
+                    <p>Security Engineering Roles</p>
+                  </div>
+                  <div data-aos="fade-up" data-aos-duration="1000" data-aos-delay="600" data-aos-once="true">
+                    <h1 className="text-3xl md:text-4xl mb-1">
+                      8.6<span className="text-violet-500">/10</span>
+                    </h1>
+                    <p>B.E. CSE CGPA</p>
+                  </div>
+                </div>
+
+
+                <ShinyText
+                  text="Think like an attacker. Build stronger defenses."
+                  disabled={false}
+                  speed={3}
+                  className="text-sm md:text-base text-violet-400"
+                />
               </div>
             </div>
 
-            <div className="node node-a">
-              <i /> WEB VAPT
+            {/* Kolom kanan */}
+            <div className="basis-full md:basis-5/12 pl-0 md:pl-8 overflow-hidden max-w-full flex justify-center ">
+              <Lanyard position={[0, 0, 15]} gravity={[0, -40, 0]} />
             </div>
-            <div className="node node-b">
-              <i /> ACTIVE DIR
-            </div>
-            <div className="node node-c">
-              <i /> CLOUD SIEM
-            </div>
-
-            <div className="tech-pod pod-react">
-              <span className="pod-icon">⚡</span> BURP SUITE
-            </div>
-            <div className="tech-pod pod-tailwind">
-              <span className="pod-icon">🛡</span> WAZUH SIEM
-            </div>
-            <div className="tech-pod pod-python">
-              <span className="pod-icon">🐍</span> PYTHON
-            </div>
-
-            <p className="visual-caption">THREAT SURFACE // LIVE SCAN</p>
           </div>
-        </section>
 
-        {/* Signal Strip */}
-        <section className="signal-strip" aria-label="Core competencies ticker">
-          <span>WEB APPLICATION PENTESTING</span>
-          <i />
-          <span>OFFENSIVE RESEARCH & POC</span>
-          <i />
-          <span>ACTIVE DIRECTORY ATTACKS</span>
-          <i />
-          <span>WAZUH & CLOUD SOC</span>
-          <i />
-          <span>PYTHON AUTOMATION</span>
-          <i />
-          <span>CYBERSECURITY MENTORSHIP</span>
-        </section>
+        </div>
+        <div className="tools mt-32">
+          <h1 className="text-4xl/snug font-bold mb-4" data-aos="fade-up" data-aos-duration="1000" data-aos-once="true" >Security Arsenal</h1>
+          <p className="w-2/5 text-base/loose opacity-50" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="300" data-aos-once="true">Offensive security, detection engineering, and secure development tools.</p>
+          <div className="tools-box mt-14 grid lg:grid-cols-4 md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-4">
 
-        {/* About Section */}
-        <section className="section about" id="about">
-          <div className="section-label">
-            <span>01</span>
-            <p>About Me</p>
+            {listTools.map((tool) => (
+              <div
+                key={tool.id} data-aos="fade-up" data-aos-duration="1000" data-aos-delay={tool.dad} data-aos-once="true"
+                className="flex items-center gap-4 p-4 border border-zinc-700 rounded-xl bg-zinc-900/60 backdrop-blur-md hover:bg-zinc-800/80 transition-all duration-300 group shadow-lg"
+              >
+                <img
+                  src={tool.gambar}
+                  alt="Tools Image"
+                  className="w-16 h-16 object-contain bg-zinc-800 p-2 rounded-lg group-hover:bg-zinc-900 transition-all duration-300"
+                />
+                <div className="flex flex-col overflow-hidden">
+                  <div className="truncate">
+                    <ShinyText
+                      text={tool.nama}
+                      disabled={false}
+                      speed={3}
+                      className="text-lg font-semibold block"
+                    />
+                  </div>
+                  <p className="text-sm text-zinc-400 truncate">{tool.ket}</p>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="about-content">
+        </div>
+        {/* tentang */}
+
+        {/* Proyek */}
+        <section className="mt-32" id="project">
+          <div className="pf-section-head" data-aos="fade-up" data-aos-duration="900" data-aos-once="true">
+            <span className="pf-section-head__eyebrow">Selected work</span>
             <h2>
-              I think like an attacker<br />
-              to build <em>unbreakable defenses.</em>
+              Things I built, <em>broke and shipped.</em>
             </h2>
-            <div className="about-right">
-              <p>
-                I’m a cybersecurity researcher and penetration tester specializing in discovering high-impact flaws before threat actors do. My expertise covers web application security (OWASP Top 10, business logic flaws), internal network pivoting, and SOC-based telemetry with Wazuh SIEM.
-              </p>
-              <p>
-                Alongside security auditing, I have mentored over 30 students at RedTeam Hacker Academy, converting complex security concepts into hands-on lab environments and CTF-style mastery.
-              </p>
-              <a className="arrow-link" href="#contact">
-                Initiate Conversation <span>↘</span>
-              </a>
-            </div>
+            <p>
+              Practical security labs, detection pipelines and secure engineering
+              projects — each one built to be run, not just looked at.
+            </p>
           </div>
 
-          <div className="facts">
-            <div>
-              <span className="fact-number">30+</span>
-              <span className="fact-label">Students Mentored</span>
-            </div>
-            <div>
-              <span className="fact-number">3+</span>
-              <span className="fact-label">Security Eng Roles</span>
-            </div>
-            <div>
-              <span className="fact-number">8.6</span>
-              <span className="fact-label">B.E. CSE CGPA</span>
-            </div>
-            <div>
-              <span className="fact-number">100%</span>
-              <span className="fact-label">Hands-on Practical</span>
-            </div>
-          </div>
+          <ProjectGrid projects={listProyek} onSelect={handleProjectClick} />
         </section>
+        {/* Proyek */}
 
-        {/* Skills Section — Progress Bar Design */}
-        <section className="section skills" id="skills">
-          <SectionHeading
-            number="02"
-            label="Skills &amp; Arsenal"
-            note={<>Domain expertise<br />mapped to real attack surfaces.</>}
-          />
-          <div className="skill-bars-grid">
-            {skillDomains.map(domain => (
-              <article
-                className="skill-bar-card"
-                key={domain.id}
-                style={{ '--card-glow': domain.glow, '--icon-accent': domain.iconAccent }}
-              >
-                <div className="sbc-header">
-                  <div className="sbc-icon-wrap" style={{ background: domain.iconAccent + '22', borderColor: domain.iconAccent + '44' }}>
-                    <img src={domain.icon} alt={domain.title} className="sbc-icon" loading="lazy" />
-                  </div>
-                  <div className="sbc-title-block">
-                    <h3 className="sbc-title">{domain.title}</h3>
-                    <span className="sbc-subtitle">{domain.subtitle}</span>
-                  </div>
-                </div>
-                <div className="sbc-skills">
-                  {domain.skills.map(skill => (
-                    <div className="sbc-skill-row" key={skill.name}>
-                      <div className="sbc-skill-meta">
-                        <span className="sbc-skill-name">{skill.name}</span>
-                        <span className="sbc-skill-pct" style={{ color: domain.iconAccent }}>{skill.pct}%</span>
-                      </div>
-                      <div className="sbc-bar-track">
-                        <div className="sbc-bar-fill" style={{ width: `${skill.pct}%`, background: domain.iconAccent }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* Work / Projects Section — Minimal Cards */}
-        <section className="section work" id="work">
-          <SectionHeading
-            number="03"
-            label="Selected Work"
-            note={<>Practical security environments,<br />defensive pipelines & custom tooling.</>}
-          />
-          <div className="projects-grid">
-            {projects.map(project => (
-              <article
-                className="project-card"
-                key={project.id}
-                style={{ '--project-accent': project.accent }}
-              >
-              <div className="project-card-top">
-                  <div className="project-badge-wrap">
-                    <span className="project-num">{project.num}</span>
-                    <span className="project-cat">{project.category}</span>
-                  </div>
-                  <img
-                    src={project.icon}
-                    alt={`${project.category} 3D icon`}
-                    className="project-card-icon"
-                    loading="lazy"
-                  />
-                  <a href={project.href} className="project-link-btn" title="Discuss or explore project">
-                    {project.linkText}
-                  </a>
-                </div>
-
-                <div className="project-card-body">
-                  <h3 className="project-title">{project.title}</h3>
-                  <p className="project-tagline">{project.tagline}</p>
-                  <p className="project-desc">{project.description}</p>
-                </div>
-
-                <div className="project-card-footer">
-                  <div className="project-metric-pill">
-                    <i className="metric-dot" />
-                    <span>{project.metrics}</span>
-                  </div>
-                  <div className="project-tags">
-                    {project.tags.map(tag => (
-                      <span className="project-tag" key={tag}>
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* Skills Section — Redesigned Minimal & 3D */}
-        <section className="section skills" id="skills">
-          <SectionHeading
-            number="03"
-            label="Skills & Arsenal"
-            note={<>Refined domain clusters,<br />core competencies & tactical tooling.</>}
-          />
-          <div className="skill-tabs" role="tablist" aria-label="Skill categories">
+        <section className="mt-32" id="experience">
+          <h1 className="text-center text-4xl font-bold mb-2" data-aos="fade-up" data-aos-once="true">Experience</h1>
+          <p className="text-base/loose text-center opacity-50 mb-10">A hands-on path through offensive research, mentoring, and secure engineering.</p>
+          <div className="experience-timeline">
             {[
-              ['all', 'All Domains'],
-              ['pentest', 'Offensive & VAPT'],
-              ['web', 'Web & API'],
-              ['directory', 'Active Directory'],
-              ['siem', 'SIEM & SOC'],
-              ['code', 'Engineering & Code'],
-            ].map(([key, label]) => (
-              <button
-                key={key}
-                className={filter === key ? 'selected' : ''}
-                onClick={() => setFilter(key)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <div className="skills-domain-grid">
-            {visibleDomains.map(domain => (
-              <article
-                className="domain-card"
-                key={domain.id}
-                style={{ '--glow-color': domain.glow }}
-              >
-                <div className="domain-visual-wrap">
-                  <img
-                    src={domain.image3d}
-                    alt={`${domain.title} 3D element`}
-                    className="domain-3d-img"
-                    loading="lazy"
-                  />
-                  <div className="domain-glow" />
-                </div>
-
-                <div className="domain-content">
-                  <div className="domain-header">
-                    <div className="domain-header-top">
-                      <span className="domain-vector">{domain.vector}</span>
-                      <img
-                        src={domain.icon}
-                        alt={`${domain.title} icon`}
-                        className="domain-icon-sm"
-                        loading="lazy"
-                      />
-                    </div>
-                    <h3 className="domain-title">{domain.title}</h3>
-                  </div>
-                  <p className="domain-desc">{domain.description}</p>
-
-                  <div className="domain-tools-section">
-                    <span className="section-micro-label">PRIMARY ARSENAL</span>
-                    <div className="tools-pills">
-                      {domain.tools.map(tool => (
-                        <span className="tool-pill" key={tool}>
-                          {tool}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="domain-comp-section">
-                    <span className="section-micro-label">CORE CAPABILITIES</span>
-                    <div className="comp-list">
-                      {domain.competencies.map(comp => (
-                        <span className="comp-item" key={comp}>
-                          <i className="comp-dot" />
-                          {comp}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+              ["JUN 2026 — PRESENT", "Cybersecurity Researcher & Mentor", "RedTeam Hacker Academy", "Conduct offensive security research and build hands-on web and network pentesting labs. Mentor students in Metasploit, Burp Suite, Nmap, CTF problem-solving, and secure coding aligned with OWASP Top 10."],
+              ["AUG 2025 — OCT 2025", "Penetration Testing Intern", "Cyber Nerd", "Conducted full-cycle web and network penetration tests with Metasploit, Nmap, and Burp Suite Pro; created Python tooling for vulnerability scanning, report generation, and system hardening."],
+              ["JUN 2024 — AUG 2024", "Ethical Hacking Intern", "Internship Studio", "Performed OSINT reconnaissance, digital footprinting, and vulnerability assessments; delivered CVSS-rated remediation reports and built Python automation for reconnaissance workflows."],
+              ["2022 — PRESENT", "B.E. Computer Science & Engineering", "Dhanalakshmi Srinivasan Engineering College", "CGPA: 8.6 · Perambalur, Tamil Nadu. Complemented academic study with security labs, CTF practice, and applied research."],
+            ].map(([date, role, company, detail]) => (
+              <article key={role} className="timeline-entry" data-aos="fade-up" data-aos-once="true">
+                <div className="timeline-marker" aria-hidden="true" />
+                <div className="timeline-card">
+                  <p className="text-violet-400 text-sm mb-2">{date}</p>
+                  <h2 className="text-xl font-bold mb-1">{role}</h2>
+                  <p className="text-zinc-300 mb-3">{company}</p>
+                  <p className="text-zinc-400 leading-relaxed">{detail}</p>
                 </div>
               </article>
             ))}
           </div>
         </section>
 
-        {/* Experience Section */}
-        <section className="section experience">
-          <div className="section-label">
-            <span>04</span>
-            <p>Experience & Journey</p>
-          </div>
-          <div className="timeline">
-            <Experience
-              date="JUN 2026 — PRESENT"
-              role={<>Cybersecurity Researcher <span>& Technical Mentor</span></>}
-              company="RedTeam Hacker Academy"
-              detail="Conducted offensive research, built simulated vulnerable lab targets, and instructed students in web pentesting, CTF problem solving, Active Directory concepts, and OWASP Top 10 remediation."
-            />
-            <Experience
-              date="AUG — OCT 2025"
-              role="Penetration Testing Intern"
-              company="Cyber Nerd"
-              detail="Conducted comprehensive web and network penetration tests, automated reconnaissance workflows with custom Python scripts, and delivered CVSS v3 remediation advisories."
-            />
-            <Experience
-              date="JUN — AUG 2024"
-              role="Ethical Hacking Intern"
-              company="Internship Studio"
-              detail="Performed OSINT reconnaissance, digital footprint analysis, automated vulnerability assessments, and generated client-ready executive security reports."
-            />
-          </div>
-
-          <div className="education">
-            <span className="edu-icon">ENG</span>
-            <div>
-              <p className="project-type">ACADEMIC BACKGROUND // 2022 — PRESENT</p>
-              <h3>B.E. Computer Science and Engineering</h3>
-              <p>Dhanalakshmi Srinivasan Engineering College (Autonomous), Perambalur, Tamil Nadu · <strong>CGPA: 8.6</strong></p>
-            </div>
-          </div>
-
-          <div className="credentials">
-            <p className="project-type">CERTIFICATIONS & TRAINING</p>
-            <p>
-              <strong>Certified Penetration Testing (CPT)</strong> — RedTeam Hacker Academy · <strong>Advanced Ethical Hacking</strong> — GUVI · <strong>Offensive Pentesting</strong> — Cybrary · <strong>Networking Basics</strong> — Cisco · <strong>Linux, Network Security, Nmap</strong> — Udemy · <strong>Wireshark & Metasploit</strong> — Infosys Springboard · <strong>IoT Fundamentals</strong> — NPTEL
-            </p>
+        <section className="mt-32" id="certifications">
+          <h1 className="text-center text-4xl font-bold mb-2" data-aos="fade-up" data-aos-once="true">Certifications & Training</h1>
+          <p className="text-base/loose text-center opacity-50 mb-10">Verified learning across offensive security, networking, and defensive monitoring.</p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              ["Certified Penetration Testing", "RedTeam Hacker Academy"],
+              ["Advanced Ethical Hacking", "GUVI"],
+              ["Offensive Pentesting", "Cybrary"],
+              ["Networking Basics", "Cisco"],
+              ["Linux, Network Security & Nmap", "Udemy"],
+              ["Wireshark & Metasploit", "Infosys Springboard"],
+              ["IoT Fundamentals", "NPTEL"],
+            ].map(([certificate, issuer]) => (
+              <article key={certificate} className="bg-zinc-900/60 border border-zinc-700 rounded-xl p-6" data-aos="fade-up" data-aos-once="true">
+                <p className="text-violet-400 text-sm mb-2">CERTIFICATION</p>
+                <h2 className="text-lg font-bold mb-2">{certificate}</h2>
+                <p className="text-zinc-400">{issuer}</p>
+              </article>
+            ))}
           </div>
         </section>
 
-        {/* Mentorship & Student Reviews Section */}
-        <section className="section mentorship" id="mentorship">
-          <SectionHeading
-            number="05"
-            label="Mentorship & Impact"
-            note={<>Training the next generation<br />of ethical hackers and defenders.</>}
-          />
+        <section className="mt-32" id="mentorship">
+          <h1 className="text-center text-4xl font-bold mb-2" data-aos="fade-up" data-aos-once="true">Mentorship & Impact</h1>
+          <p className="text-base/loose text-center opacity-50 mb-10">Training the next generation of ethical hackers through hands-on labs and practical security education.</p>
+          <div className="grid md:grid-cols-2 gap-6 mb-10">
+            <img src={`${basePath}/assets/sathish/images/students/classroom-session.jpeg`} alt="Sathish leading a cybersecurity training session" className="w-full h-72 object-cover rounded-xl border border-zinc-700" loading="lazy" />
+            <img src={`${basePath}/assets/sathish/images/students/group-photo.jpeg`} alt="Students at RedTeam Hacker Academy" className="w-full h-72 object-cover rounded-xl border border-zinc-700" loading="lazy" />
+          </div>
+          <div className="reviews-marquee" aria-label="Student reviews">
+            <div className="reviews-track">
+            {[...reviews.filter((review) => review.approved), ...reviews.filter((review) => review.approved)].map((review, index) => (
+              <article key={`${review.id}-${index}`} className="review-float-card" aria-hidden={index >= reviews.filter((item) => item.approved).length}>
+                <p className="text-yellow-400 mb-3">{'★'.repeat(review.rating)}</p>
+                <p className="text-zinc-300 leading-relaxed mb-4">“{review.quote}”</p>
+                <p className="font-semibold">{review.name}</p>
+                <p className="text-sm text-zinc-500">{review.track}</p>
+              </article>
+            ))}
+            </div>
+          </div>
+        </section>
 
-          <div className="mentor-grid">
-            <div className="mentor-intro">
-              <p className="big-number">
-                30<span>+</span>
-              </p>
-              <p className="mentor-copy">
-                Students mentored through hands-on labs, CTF challenges, and real-world ethical hacking at RedTeam Hacker Academy.
-              </p>
-              <div className="workshop-line">
-                <span>WORKSHOPS</span>
-                <p>
-                  OWASP Community Meetup Coimbatore · Ethical Hacking Workshop, NIT · Python Workshop, IIT Madras
-                </p>
+
+        {/* Kontak */}
+        <div className="kontak mt-32 sm:p-10 p-0" id="contact">
+          <h1
+            className="text-4xl mb-2 font-bold text-center"
+            data-aos="fade-up"
+            data-aos-duration="1000"
+            data-aos-once="true"
+          >
+            Let’s Make Systems Harder to Break
+          </h1>
+          <p
+            className="text-base/loose text-center mb-10 opacity-50"
+            data-aos="fade-up"
+            data-aos-duration="1000"
+            data-aos-delay="300"
+            data-aos-once="true"
+          >
+            Looking for a penetration tester, application-security researcher, or hands-on cybersecurity trainer? Let’s collaborate.
+          </p>
+
+          {/* Container dua kolom */}
+          <div className="flex flex-col md:flex-row gap-8">
+            <div className="flex-1 bg-zinc-800 p-6 rounded-md" data-aos="fade-up" data-aos-duration="1000" data-aos-delay="400" data-aos-once="true">
+              <h2 className="text-2xl font-bold mb-5">Connect with Sathish</h2>
+              <p className="text-zinc-400 mb-6 leading-relaxed">Available for security engineering, penetration testing, application-security research, and cybersecurity training.</p>
+              <div className="flex flex-col gap-4">
+                <a className="text-violet-400 hover:text-violet-300" href="mailto:sathish1012cybok@gmail.com">sathish1012cybok@gmail.com</a>
+                <a className="text-violet-400 hover:text-violet-300" href="tel:+918940599732">+91 89405 99732</a>
+                <a className="text-violet-400 hover:text-violet-300" href="https://linkedin.com/in/amsathish" target="_blank" rel="noreferrer">LinkedIn ↗</a>
+                <a className="text-violet-400 hover:text-violet-300" href="https://github.com/cybok10" target="_blank" rel="noreferrer">GitHub ↗</a>
               </div>
             </div>
-            <StudentGallery />
-          </div>
 
-          {/* Testimonials Header & Tabs */}
-          <div className="testimonials-heading">
-            <div>
-              <p className="eyebrow">STUDENT TESTIMONIALS & PROOF</p>
-              <h3>Verified Student Feedback</h3>
-            </div>
-            <div className="review-tab-buttons" role="tablist">
-              <button
-                className={reviewTab === 'cards' ? 'selected' : ''}
-                onClick={() => setReviewTab('cards')}
+            {/* Contact Form di kanan */}
+            <div className="flex-1">
+              <form
+                action="https://formsubmit.co/sathish1012cybok@gmail.com"
+                method="POST"
+                className="bg-zinc-800 p-10 w-full rounded-md"
+                autoComplete="off"
+                data-aos="fade-up"
+                data-aos-duration="1000"
+                data-aos-delay="500"
+                data-aos-once="true"
               >
-                ★ Student Stories ({reviews.length})
-              </button>
-              <button
-                className={reviewTab === 'screenshots' ? 'selected' : ''}
-                onClick={() => setReviewTab('screenshots')}
-              >
-                ✓ Google Review Proofs (8)
-              </button>
-            </div>
-          </div>
-
-          {/* Reviews Content */}
-          {reviewTab === 'cards' ? (
-            <div className="testimonials-grid" aria-live="polite">
-              {reviews.map(review => (
-                <article className="testimonial-card" key={review.id}>
-                  <div className="testimonial-header">
-                    <div className="stars" aria-label={`${review.rating} out of 5 stars`}>
-                      {'★'.repeat(review.rating || 5)}
-                    </div>
-                    <span className="verified-badge">✓ {review.date || 'Google Verified'}</span>
+                <div className="flex flex-col gap-6">
+                  <div className="flex flex-col gap-2">
+                    <label className="font-semibold">Full Name</label>
+                    <input
+                      type="text"
+                      name="Name"
+                      placeholder="Input Name..."
+                      className="border border-zinc-500 p-2 rounded-md"
+                      required
+                    />
                   </div>
-                  <p className="testimonial-quote">“{review.quote}”</p>
-                  <footer className="testimonial-footer">
-                    <div className="avatar-letter">{review.name.charAt(0)}</div>
-                    <div>
-                      <span className="reviewer-name">{review.name}</span>
-                      <small className="reviewer-track">{review.track}</small>
-                    </div>
-                  </footer>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <ReviewGallery />
-          )}
-        </section>
-
-        {/* Contact Section */}
-        <section className="contact" id="contact">
-          <div>
-            <div className="eyebrow">
-              <span className="pulse" />
-              <span>GET IN TOUCH</span>
-            </div>
-            <h2>
-              Let’s make systems<br />
-              <em>harder to break.</em>
-            </h2>
-          </div>
-          <div className="contact-side">
-            <p>
-              Looking for a penetration tester, application security researcher, or hands-on cybersecurity trainer? Let’s collaborate.
-            </p>
-            <a href="mailto:sathish1012cybok@gmail.com" className="email-link">
-              sathish1012cybok@gmail.com <span>↗</span>
-            </a>
-            <div className="contact-details">
-              <div className="socials">
-                <a href="https://linkedin.com/in/amsathish" target="_blank" rel="noreferrer">
-                  LinkedIn ↗
-                </a>
-                <a href="https://github.com/cybok10" target="_blank" rel="noreferrer">
-                  GitHub ↗
-                </a>
-                <a href="tel:8940599732">
-                  Call: +91 89405 99732
-                </a>
-              </div>
+                  <div className="flex flex-col gap-2">
+                    <label className="font-semibold">Email</label>
+                    <input
+                      type="email"
+                      name="Email"
+                      placeholder="Input Email..."
+                      className="border border-zinc-500 p-2 rounded-md"
+                      required
+                    />
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="message" className="font-semibold">Message</label>
+                    <textarea
+                      name="message"
+                      id="message"
+                      cols="45"
+                      rows="7"
+                      placeholder="Message..."
+                      className="border border-zinc-500 p-2 rounded-md"
+                      required
+                    ></textarea>
+                  </div>
+                  <div className="text-center">
+                    <button
+                      type="submit"
+                      className="font-semibold bg-[#1a1a1a] p-4 px-6 rounded-full w-full cursor-pointer border border-gray-700 hover:bg-[#222] transition-colors"
+                    >
+                      <ShinyText text="Send" disabled={false} speed={3} className="custom-class" />
+                    </button>
+                  </div>
+                </div>
+              </form>
             </div>
           </div>
-        </section>
+        </div>
+        {/* Kontak */}
       </main>
 
-      {/* Footer */}
-      <footer>
-        <a className="brand" href="#home">
-          <span className="brand-mark">S</span>
-          <span className="brand-text">
-            Sathish<span className="brand-accent">.m</span>
-          </span>
-        </a>
-        <p>© {new Date().getFullYear()} Sathish M. Offensive Cybersecurity Researcher & Mentor.</p>
-        <a href="#home" className="back-to-top">
-          Back to top ↑
-        </a>
-      </footer>
+      <ProjectModal
+        isOpen={!!selectedProject}
+        onClose={handleCloseModal}
+        project={selectedProject}
+      />
     </>
-  );
+  )
 }
 
-function SectionHeading({ number, label, note }) {
-  return (
-    <div className="section-heading">
-      <div className="section-label">
-        <span>{number}</span>
-        <p>{label}</p>
-      </div>
-      <p className="section-note">{note}</p>
-    </div>
-  );
-}
-
-function Experience({ date, role, company, detail }) {
-  return (
-    <article className="timeline-item">
-      <div className="timeline-date">{date}</div>
-      <div className="timeline-dot" />
-      <div className="timeline-body">
-        <p className="role">{role}</p>
-        <p className="company">{company}</p>
-        <p className="role-detail">{detail}</p>
-      </div>
-    </article>
-  );
-}
-
-
-function StudentGallery() {
-  return (
-    <div className="student-gallery">
-      <figure className="gallery-main">
-        <img
-          src="/images/students/classroom-session.jpeg"
-          alt="Sathish M leading an offensive cybersecurity training session"
-          loading="lazy"
-        />
-        <figcaption>Hands-on Classroom Security Labs · Velachery</figcaption>
-      </figure>
-      <figure className="gallery-side">
-        <img
-          src="/images/students/group-photo.jpeg"
-          alt="Students gathered at RedTeam Hacker Academy"
-          loading="lazy"
-        />
-        <figcaption>RedTeam Hacker Academy Student Cohort</figcaption>
-      </figure>
-    </div>
-  );
-}
-
-function ReviewGallery() {
-  const reviews = [
-    '13-03-33',
-    '13-03-39',
-    '13-03-48',
-    '13-03-54',
-    '13-04-00',
-    '13-04-08',
-    '13-04-17',
-    '13-04-27',
-  ];
-  return (
-    <div className="review-gallery">
-      {reviews.map(time => (
-        <a
-          key={time}
-          href={`/images/reviews/Screenshot%20From%202026-09-14%20${time}.png`}
-          target="_blank"
-          rel="noreferrer"
-          title="Click to view verified review in full size"
-        >
-          <img
-            src={`/images/reviews/Screenshot%20From%202026-09-14%20${time}.png`}
-            alt="Google Review screenshot for Sathish M"
-            loading="lazy"
-          />
-          <span className="proof-overlay">View Screenshot ↗</span>
-        </a>
-      ))}
-    </div>
-  );
-}
-
-export default App;
+export default App
