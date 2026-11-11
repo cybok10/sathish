@@ -2,7 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { config, ALLOWED_UPLOAD_TYPES } from "./config.js";
-import { getDatabase } from "./db.js";
+import { initDatabase } from "./db.js";
+import { deleteUpload, readUpload, saveUpload } from "./uploads.js";
 import {
   hardening as tacticsHardening,
   services as tacticsServices,
@@ -53,13 +54,13 @@ const POST_JOINS = `
   LEFT JOIN categories c ON c.id = b.category_id`;
 
 const TAGS_SUBQUERY = `(
-  SELECT GROUP_CONCAT(t.name, '||')
+  SELECT string_agg(t.name::text, '||')
   FROM blog_tags bt JOIN tags t ON t.id = bt.tag_id
   WHERE bt.blog_id = b.id
 ) AS tag_names`;
 
 const TAGS_IDS_SUBQUERY = `(
-  SELECT GROUP_CONCAT(t.id, ',')
+  SELECT string_agg(t.id::text, ',')
   FROM blog_tags bt JOIN tags t ON t.id = bt.tag_id
   WHERE bt.blog_id = b.id
 ) AS tag_ids`;
@@ -91,18 +92,18 @@ function publicPostClause(alias = "b") {
   return `(${alias}.status = 'published' OR (${alias}.status = 'scheduled' AND ${alias}.published_at IS NOT NULL AND ${alias}.published_at <= ?))`;
 }
 
-function publishDueScheduled(db, now = nowIso()) {
-  db.prepare(
+async function publishDueScheduled(db, now = nowIso()) {
+  await db.prepare(
     "UPDATE blogs SET status = 'published' WHERE status = 'scheduled' AND published_at IS NOT NULL AND published_at <= ?"
   ).run(now);
 }
 
-function uniqueSlug(db, base, excludeId = null) {
+async function uniqueSlug(db, base, excludeId = null) {
   const root = slugify(base, "post");
   let candidate = root;
   let suffix = 2;
-  const check = db.prepare("SELECT id FROM blogs WHERE slug = ? AND id IS NOT ?");
-  while (check.get(candidate, excludeId)) {
+  const check = db.prepare("SELECT id FROM blogs WHERE slug = ? AND id IS DISTINCT FROM ?");
+  while (await check.get(candidate, excludeId)) {
     candidate = `${root}-${suffix}`;
     suffix += 1;
     if (suffix > 9999) {
@@ -113,19 +114,19 @@ function uniqueSlug(db, base, excludeId = null) {
   return candidate;
 }
 
-function uniqueTaxonomySlug(db, table, name) {
+async function uniqueTaxonomySlug(db, table, name) {
   const root = slugify(name, "item");
   let candidate = root;
   let suffix = 2;
   const check = db.prepare(`SELECT id FROM ${table} WHERE slug = ?`);
-  while (check.get(candidate)) {
+  while (await check.get(candidate)) {
     candidate = `${root}-${suffix}`;
     suffix += 1;
   }
   return candidate;
 }
 
-function setPostTags(db, blogId, tags) {
+async function setPostTags(db, blogId, tags) {
   const normalized = [...new Set(
     (Array.isArray(tags) ? tags : [])
       .map((tag) => String(tag).trim())
@@ -133,7 +134,7 @@ function setPostTags(db, blogId, tags) {
       .slice(0, 8)
   )];
 
-  db.prepare("DELETE FROM blog_tags WHERE blog_id = ?").run(blogId);
+  await db.prepare("DELETE FROM blog_tags WHERE blog_id = ?").run(blogId);
   const upsert = db.prepare(
     "INSERT INTO tags (name, slug) VALUES (?, ?) ON CONFLICT(slug) DO UPDATE SET name = excluded.name"
   );
@@ -142,9 +143,9 @@ function setPostTags(db, blogId, tags) {
 
   for (const tag of normalized) {
     const slug = slugify(tag, "tag");
-    upsert.run(tag.slice(0, 40), slug);
-    const row = find.get(slug);
-    if (row) link.run(blogId, row.id);
+    await upsert.run(tag.slice(0, 40), slug);
+    const row = await find.get(slug);
+    if (row) await link.run(blogId, row.id);
   }
 }
 
@@ -282,15 +283,15 @@ function tacticsUrls(base, now) {
   ];
 }
 
-function buildSitemap(db) {
+async function buildSitemap(db) {
   const base = `${config.siteUrl}${config.basePath}`;
   const now = nowIso();
-  const posts = db
+  const posts = await db
     .prepare(
       `SELECT b.slug, b.updated_at, b.published_at FROM blogs b WHERE ${publicPostClause()} ORDER BY b.published_at DESC`
     )
     .all(now);
-  const categories = db
+  const categories = await db
     .prepare(
       `SELECT c.slug, MAX(COALESCE(b.updated_at, b.created_at)) AS updated
        FROM categories c LEFT JOIN blogs b ON b.category_id = c.id
@@ -298,7 +299,7 @@ function buildSitemap(db) {
        GROUP BY c.id`
     )
     .all(now);
-  const authors = db
+  const authors = await db
     .prepare(
       `SELECT a.slug, MAX(COALESCE(b.updated_at, b.created_at)) AS updated
        FROM authors a LEFT JOIN blogs b ON b.author_id = a.id
@@ -367,10 +368,10 @@ function detectImageType(buffer) {
   return null;
 }
 
-export function createBlogApi() {
-  const db = getDatabase();
-  ensureAdmin(db);
-  publishDueScheduled(db);
+export async function createBlogApi() {
+  const db = await initDatabase();
+  await ensureAdmin(db);
+  await publishDueScheduled(db);
 
   const loginLimit = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 8 });
   const publicLimit = createRateLimiter({ windowMs: 60 * 1000, max: 600 });
@@ -416,13 +417,13 @@ export function createBlogApi() {
         return await handleLogin(req, res);
       }
       if (method === "POST" && pathname === "/auth/logout") {
-        const session = getSession(req, db);
-        if (session) destroySession(db, session.token);
+        const session = await getSession(req, db);
+        if (session) await destroySession(db, session.token);
         res.setHeader("Set-Cookie", clearCookie(req));
         return sendJson(res, 200, { ok: true });
       }
       if (method === "GET" && pathname === "/auth/me") {
-        const session = getSession(req, db);
+        const session = await getSession(req, db);
         if (!session) throw new HttpError(401, "Not authenticated");
         return sendJson(res, 200, {
           admin: {
@@ -443,22 +444,24 @@ export function createBlogApi() {
         return handlePublicPosts(url, res, { forceSearch: true });
       }
       if (method === "GET" && pathname === "/blog/stats") {
-        publishDueScheduled(db);
+        await publishDueScheduled(db);
         const now = nowIso();
-        const totals = db
+        const totals = await db
           .prepare(
             `SELECT COUNT(*) AS articles, COALESCE(SUM(b.view_count), 0) AS views
              FROM blogs b WHERE ${publicPostClause()}`
           )
           .get(now);
-        const categories = db.prepare("SELECT COUNT(*) AS count FROM categories").get().count;
-        const authors = db.prepare("SELECT COUNT(*) AS count FROM authors").get().count;
-        const tags = db
-          .prepare(
-            `SELECT COUNT(DISTINCT bt.tag_id) AS count FROM blog_tags bt
-             JOIN blogs b ON b.id = bt.blog_id WHERE ${publicPostClause()}`
-          )
-          .get(now).count;
+        const categories = (await db.prepare("SELECT COUNT(*) AS count FROM categories").get()).count;
+        const authors = (await db.prepare("SELECT COUNT(*) AS count FROM authors").get()).count;
+        const tags = (
+          await db
+            .prepare(
+              `SELECT COUNT(DISTINCT bt.tag_id) AS count FROM blog_tags bt
+               JOIN blogs b ON b.id = bt.blog_id WHERE ${publicPostClause()}`
+            )
+            .get(now)
+        ).count;
         return sendJson(res, 200, {
           articles: totals.articles || 0,
           views: totals.views || 0,
@@ -469,7 +472,7 @@ export function createBlogApi() {
         });
       }
       if (method === "GET" && pathname === "/blog/categories") {
-        const rows = db
+        const rows = await db
           .prepare(
             `SELECT c.id, c.name, c.slug, c.description,
                     COUNT(b.id) AS post_count
@@ -482,20 +485,20 @@ export function createBlogApi() {
         return sendJson(res, 200, { items: rows });
       }
       if (method === "GET" && pathname === "/blog/tags") {
-        const rows = db
+        const rows = await db
           .prepare(
             `SELECT t.id, t.name, t.slug, COUNT(bt.blog_id) AS post_count
              FROM tags t
              LEFT JOIN blog_tags bt ON bt.tag_id = t.id
              LEFT JOIN blogs b ON b.id = bt.blog_id AND ${publicPostClause("b")}
-             GROUP BY t.id HAVING post_count > 0
+             GROUP BY t.id HAVING COUNT(bt.blog_id) > 0
              ORDER BY post_count DESC, t.name`
           )
           .all(nowIso());
         return sendJson(res, 200, { items: rows });
       }
       if (method === "GET" && pathname === "/blog/authors") {
-        const rows = db
+        const rows = await db
           .prepare(
             `SELECT a.id, a.name, a.slug, a.role, a.bio, a.avatar_url, a.github, a.linkedin, a.twitter,
                     COUNT(b.id) AS post_count
@@ -535,7 +538,7 @@ export function createBlogApi() {
       }
       match = pathname.match(/^\/blog\/tags\/([^/]+)$/);
       if (method === "GET" && match) {
-        const tag = db.prepare("SELECT id, name, slug FROM tags WHERE slug = ?").get(decodeURIComponent(match[1]));
+        const tag = await db.prepare("SELECT id, name, slug FROM tags WHERE slug = ?").get(decodeURIComponent(match[1]));
         if (!tag) throw new HttpError(404, "Tag not found");
         url.searchParams.set("tag", tag.slug);
         return handlePublicPosts(url, res);
@@ -553,44 +556,44 @@ export function createBlogApi() {
 
       // ---------- Admin ----------
       if (pathname === "/admin/stats" && method === "GET") {
-        if (!requireAdmin(req, res, db)) return;
+        if (!(await requireAdmin(req, res, db))) return;
         return handleStats(res);
       }
       if (pathname === "/admin/posts" && method === "GET") {
-        if (!requireAdmin(req, res, db)) return;
+        if (!(await requireAdmin(req, res, db))) return;
         return handleAdminPosts(url, res);
       }
       if (pathname === "/admin/posts" && method === "POST") {
-        const session = requireAdmin(req, res, db, { mutating: true });
+        const session = await requireAdmin(req, res, db, { mutating: true });
         if (!session) return;
         if (!writeLimit(ip)) throw new HttpError(429, "Too many writes");
         return await handleCreatePost(req, res);
       }
       if (pathname === "/admin/posts/export" && method === "GET") {
-        if (!requireAdmin(req, res, db)) return;
+        if (!(await requireAdmin(req, res, db))) return;
         return handleExport(res);
       }
       match = pathname.match(/^\/admin\/posts\/(\d+)$/);
       if (match) {
         const id = Number(match[1]);
         if (method === "GET") {
-          if (!requireAdmin(req, res, db)) return;
+          if (!(await requireAdmin(req, res, db))) return;
           return handleAdminPost(id, res);
         }
         if (method === "PUT" || method === "PATCH") {
-          const session = requireAdmin(req, res, db, { mutating: true });
+          const session = await requireAdmin(req, res, db, { mutating: true });
           if (!session) return;
           if (!writeLimit(ip)) throw new HttpError(429, "Too many writes");
           return await handleUpdatePost(req, res, id);
         }
         if (method === "DELETE") {
-          if (!requireAdmin(req, res, db, { mutating: true })) return;
+          if (!(await requireAdmin(req, res, db, { mutating: true }))) return;
           return handleDeletePost(id, res);
         }
       }
       match = pathname.match(/^\/admin\/posts\/(\d+)\/(publish|unpublish|feature|unfeature|schedule)$/);
       if (method === "POST" && match) {
-        if (!requireAdmin(req, res, db, { mutating: true })) return;
+        if (!(await requireAdmin(req, res, db, { mutating: true }))) return;
         return await handlePostAction(Number(match[1]), match[2], req, res);
       }
       match = pathname.match(/^\/admin\/(categories|tags|authors)(?:\/(\d+))?$/);
@@ -598,27 +601,27 @@ export function createBlogApi() {
         const kind = match[1];
         const id = match[2] ? Number(match[2]) : null;
         if (method === "GET") {
-          if (!requireAdmin(req, res, db)) return;
+          if (!(await requireAdmin(req, res, db))) return;
           return handleTaxonomyList(kind, res);
         }
-        if (!requireAdmin(req, res, db, { mutating: true })) return;
+        if (!(await requireAdmin(req, res, db, { mutating: true }))) return;
         if (method === "POST" && !id) return await handleTaxonomyCreate(kind, req, res);
         if ((method === "PUT" || method === "PATCH") && id) return await handleTaxonomyUpdate(kind, id, req, res);
         if (method === "DELETE" && id) return handleTaxonomyDelete(kind, id, res);
       }
       if (pathname === "/admin/uploads" && method === "POST") {
-        if (!requireAdmin(req, res, db, { mutating: true })) return;
+        if (!(await requireAdmin(req, res, db, { mutating: true }))) return;
         if (!uploadLimit(ip)) throw new HttpError(429, "Upload limit reached");
         return await handleUpload(req, res);
       }
       match = pathname.match(/^\/admin\/uploads\/([^/]+)$/);
       if (method === "DELETE" && match) {
-        if (!requireAdmin(req, res, db, { mutating: true })) return;
+        if (!(await requireAdmin(req, res, db, { mutating: true }))) return;
         return handleDeleteUpload(decodeURIComponent(match[1]), res);
       }
       if (pathname === "/admin/subscribers" && method === "GET") {
-        if (!requireAdmin(req, res, db)) return;
-        const items = db
+        if (!(await requireAdmin(req, res, db))) return;
+        const items = await db
           .prepare("SELECT id, email, status, created_at FROM subscribers ORDER BY created_at DESC LIMIT 500")
           .all();
         return sendJson(res, 200, { items });
@@ -645,13 +648,13 @@ export function createBlogApi() {
     const password = String(body.password || "");
     assert(email && password, 400, "Email and password are required");
 
-    const admin = db.prepare("SELECT * FROM admins WHERE email = ?").get(email);
-    if (!admin || !verifyPassword(password, admin.password_hash)) {
+    const admin = await db.prepare("SELECT * FROM admins WHERE email = ?").get(email);
+    if (!admin || !(await verifyPassword(password, admin.password_hash))) {
       throw new HttpError(401, "Invalid email or password");
     }
 
-    cleanupExpiredSessions();
-    const session = createSession(db, admin.id);
+    await cleanupExpiredSessions();
+    const session = await createSession(db, admin.id);
     res.setHeader("Set-Cookie", sessionCookie(req, session.token, session.expiresAt));
     return sendJson(res, 200, {
       admin: { id: admin.id, email: admin.email, name: admin.name, role: admin.role },
@@ -659,12 +662,12 @@ export function createBlogApi() {
     });
   }
 
-  function cleanupExpiredSessions() {
-    db.prepare("DELETE FROM sessions WHERE expires_at <= ?").run(nowIso());
+  async function cleanupExpiredSessions() {
+    await db.prepare("DELETE FROM sessions WHERE expires_at <= ?").run(nowIso());
   }
 
-  function handlePublicPosts(url, res, { forceSearch = false } = {}) {
-    publishDueScheduled(db);
+  async function handlePublicPosts(url, res, { forceSearch = false } = {}) {
+    await publishDueScheduled(db);
     const page = clamp(toInt(url.searchParams.get("page"), 1), 1, 10_000);
     const limit = clamp(toInt(url.searchParams.get("limit"), 9), 1, 50);
     const offset = (page - 1) * limit;
@@ -717,11 +720,13 @@ export function createBlogApi() {
 
     const whereSql = `WHERE ${where.join(" AND ")}`;
 
-    const total = db
-      .prepare(`SELECT COUNT(*) AS count ${POST_JOINS} ${whereSql}`)
-      .get(...params).count;
+    const total = (
+      await db
+        .prepare(`SELECT COUNT(*) AS count ${POST_JOINS} ${whereSql}`)
+        .get(...params)
+    ).count;
 
-    const rows = db
+    const rows = await db
       .prepare(
         `SELECT ${POST_COLUMNS}, ${TAGS_SUBQUERY}
          ${POST_JOINS} ${whereSql}
@@ -745,9 +750,9 @@ export function createBlogApi() {
     });
   }
 
-  function handlePublicPost(slug, res) {
-    publishDueScheduled(db);
-    const row = db
+  async function handlePublicPost(slug, res) {
+    await publishDueScheduled(db);
+    const row = await db
       .prepare(
         `SELECT ${POST_COLUMNS}, b.content, ${TAGS_SUBQUERY}
          ${POST_JOINS}
@@ -757,13 +762,13 @@ export function createBlogApi() {
     if (!row) throw new HttpError(404, "Article not found");
 
     const now = nowIso();
-    const previous = db
+    const previous = await db
       .prepare(
         `SELECT title, slug FROM blogs b WHERE ${publicPostClause()} AND published_at < ?
          ORDER BY published_at DESC LIMIT 1`
       )
       .get(now, row.published_at);
-    const next = db
+    const next = await db
       .prepare(
         `SELECT title, slug FROM blogs b WHERE ${publicPostClause()} AND published_at > ?
          ORDER BY published_at ASC LIMIT 1`
@@ -776,14 +781,14 @@ export function createBlogApi() {
     });
   }
 
-  function handleRelated(slug, url, res) {
+  async function handleRelated(slug, url, res) {
     const limit = clamp(toInt(url.searchParams.get("limit"), 3), 1, 6);
-    const post = db
+    const post = await db
       .prepare(`SELECT id, category_id FROM blogs b WHERE b.slug = ? AND ${publicPostClause()}`)
       .get(slug, nowIso());
     if (!post) throw new HttpError(404, "Article not found");
 
-    const rows = db
+    const rows = await db
       .prepare(
         `SELECT ${POST_COLUMNS}, ${TAGS_SUBQUERY},
           (
@@ -803,7 +808,7 @@ export function createBlogApi() {
 
     if (rows.length < limit) {
       const existing = new Set(rows.map((row) => row.id));
-      const popular = db
+      const popular = await db
         .prepare(
           `SELECT ${POST_COLUMNS}, ${TAGS_SUBQUERY} ${POST_JOINS}
            WHERE b.id != ? AND ${publicPostClause()}
@@ -822,15 +827,15 @@ export function createBlogApi() {
   }
 
   async function handleView(req, res, slug, ip) {
-    const post = db.prepare("SELECT id FROM blogs WHERE slug = ?").get(slug);
+    const post = await db.prepare("SELECT id FROM blogs WHERE slug = ?").get(slug);
     if (!post) throw new HttpError(404, "Article not found");
     const body = await parseJsonBody(req, 4096).catch(() => ({}));
     const source = String(body.source || "web").slice(0, 80);
     const referrer = String(req.headers.referer || "").slice(0, 300);
     db.exec("BEGIN");
     try {
-      db.prepare("UPDATE blogs SET view_count = view_count + 1 WHERE id = ?").run(post.id);
-      db.prepare("INSERT INTO blog_views (blog_id, created_at, source) VALUES (?, ?, ?)").run(
+      await db.prepare("UPDATE blogs SET view_count = view_count + 1 WHERE id = ?").run(post.id);
+      await db.prepare("INSERT INTO blog_views (blog_id, created_at, source) VALUES (?, ?, ?)").run(
         post.id,
         nowIso(),
         `${source}|${referrer}|${ip}`.slice(0, 400)
@@ -843,8 +848,8 @@ export function createBlogApi() {
     return sendJson(res, 202, { ok: true });
   }
 
-  function handleCategory(slug, url, res) {
-    const category = db
+  async function handleCategory(slug, url, res) {
+    const category = await db
       .prepare("SELECT id, name, slug, description FROM categories WHERE slug = ?")
       .get(slug);
     if (!category) throw new HttpError(404, "Category not found");
@@ -853,10 +858,12 @@ export function createBlogApi() {
     const page = clamp(toInt(params.get("page"), 1), 1, 10_000);
     const limit = clamp(toInt(params.get("limit"), 9), 1, 50);
     const now = nowIso();
-    const total = db
-      .prepare(`SELECT COUNT(*) AS count ${POST_JOINS} WHERE ${publicPostClause()} AND c.slug = ?`)
-      .get(now, slug).count;
-    const rows = db
+    const total = (
+      await db
+        .prepare(`SELECT COUNT(*) AS count ${POST_JOINS} WHERE ${publicPostClause()} AND c.slug = ?`)
+        .get(now, slug)
+    ).count;
+    const rows = await db
       .prepare(
         `SELECT ${POST_COLUMNS}, ${TAGS_SUBQUERY} ${POST_JOINS}
          WHERE ${publicPostClause()} AND c.slug = ?
@@ -875,8 +882,8 @@ export function createBlogApi() {
     });
   }
 
-  function handleAuthor(slug, url, res) {
-    const author = db
+  async function handleAuthor(slug, url, res) {
+    const author = await db
       .prepare(
         "SELECT id, name, slug, role, bio, avatar_url, email, github, linkedin, twitter FROM authors WHERE slug = ?"
       )
@@ -885,10 +892,12 @@ export function createBlogApi() {
     const page = clamp(toInt(url.searchParams.get("page"), 1), 1, 10_000);
     const limit = clamp(toInt(url.searchParams.get("limit"), 9), 1, 50);
     const now = nowIso();
-    const total = db
-      .prepare(`SELECT COUNT(*) AS count ${POST_JOINS} WHERE ${publicPostClause()} AND a.slug = ?`)
-      .get(now, slug).count;
-    const rows = db
+    const total = (
+      await db
+        .prepare(`SELECT COUNT(*) AS count ${POST_JOINS} WHERE ${publicPostClause()} AND a.slug = ?`)
+        .get(now, slug)
+    ).count;
+    const rows = await db
       .prepare(
         `SELECT ${POST_COLUMNS}, ${TAGS_SUBQUERY} ${POST_JOINS}
          WHERE ${publicPostClause()} AND a.slug = ?
@@ -907,8 +916,8 @@ export function createBlogApi() {
     });
   }
 
-  function handleFeed(res) {
-    const posts = db
+  async function handleFeed(res) {
+    const posts = await db
       .prepare(
         `SELECT ${POST_COLUMNS}, b.content ${POST_JOINS}
          WHERE ${publicPostClause()} ORDER BY b.published_at DESC LIMIT 30`
@@ -919,8 +928,8 @@ export function createBlogApi() {
     });
   }
 
-  function handleSitemap(res) {
-    return sendText(res, 200, buildSitemap(db), "application/xml; charset=utf-8", {
+  async function handleSitemap(res) {
+    return sendText(res, 200, await buildSitemap(db), "application/xml; charset=utf-8", {
       "Cache-Control": "public, max-age=300",
     });
   }
@@ -933,19 +942,18 @@ export function createBlogApi() {
     assert(email.length <= 254, 400, "Email is too long");
     const honeypot = String(body.website || "").trim();
     if (honeypot) return sendJson(res, 200, { ok: true });
-    db.prepare(
+    await db.prepare(
       "INSERT INTO subscribers (email, created_at) VALUES (?, ?) ON CONFLICT(email) DO UPDATE SET status = 'active'"
     ).run(email, nowIso());
     return sendJson(res, 201, { ok: true });
   }
 
-  function handleUploadedFile(filename, res) {
+  async function handleUploadedFile(filename, res) {
     if (!UPLOAD_FILENAME.test(filename)) throw new HttpError(404, "File not found");
-    const record = db.prepare("SELECT filename, mime, size FROM uploads WHERE filename = ?").get(filename);
+    const record = await db.prepare("SELECT filename, mime, size FROM uploads WHERE filename = ?").get(filename);
     if (!record) throw new HttpError(404, "File not found");
-    const filePath = path.join(config.uploadDir, filename);
-    if (!fs.existsSync(filePath)) throw new HttpError(404, "File not found");
-    const data = fs.readFileSync(filePath);
+    const data = await readUpload(filename);
+    if (!data) throw new HttpError(404, "File not found");
     res.writeHead(200, {
       "Content-Type": record.mime,
       "Content-Length": data.length,
@@ -959,9 +967,9 @@ export function createBlogApi() {
 
   // ---------- admin handlers ----------
 
-  function handleStats(res) {
-    publishDueScheduled(db);
-    const totals = db
+  async function handleStats(res) {
+    await publishDueScheduled(db);
+    const totals = await db
       .prepare(
         `SELECT
           COUNT(*) AS total,
@@ -972,14 +980,14 @@ export function createBlogApi() {
         FROM blogs`
       )
       .get();
-    const popular = db
+    const popular = await db
       .prepare(`SELECT ${POST_COLUMNS}, ${TAGS_SUBQUERY} ${POST_JOINS} ORDER BY b.view_count DESC LIMIT 5`)
       .all();
-    const recent = db
+    const recent = await db
       .prepare(`SELECT ${POST_COLUMNS}, ${TAGS_SUBQUERY} ${POST_JOINS} ORDER BY b.updated_at DESC LIMIT 5`)
       .all();
-    const subscribers = db.prepare("SELECT COUNT(*) AS count FROM subscribers WHERE status = 'active'").get().count;
-    const categories = db.prepare("SELECT COUNT(*) AS count FROM categories").get().count;
+    const subscribers = (await db.prepare("SELECT COUNT(*) AS count FROM subscribers WHERE status = 'active'").get()).count;
+    const categories = (await db.prepare("SELECT COUNT(*) AS count FROM categories").get()).count;
     return sendJson(res, 200, {
       totals: {
         total: totals.total || 0,
@@ -995,8 +1003,8 @@ export function createBlogApi() {
     });
   }
 
-  function handleAdminPosts(url, res) {
-    publishDueScheduled(db);
+  async function handleAdminPosts(url, res) {
+    await publishDueScheduled(db);
     const page = clamp(toInt(url.searchParams.get("page"), 1), 1, 10_000);
     const limit = clamp(toInt(url.searchParams.get("limit"), 20), 1, 100);
     const where = ["1 = 1"];
@@ -1012,8 +1020,10 @@ export function createBlogApi() {
       params.push(`%${q}%`, `%${q}%`);
     }
     const whereSql = where.join(" AND ");
-    const total = db.prepare(`SELECT COUNT(*) AS count ${POST_JOINS} WHERE ${whereSql}`).get(...params).count;
-    const rows = db
+    const total = (
+      await db.prepare(`SELECT COUNT(*) AS count ${POST_JOINS} WHERE ${whereSql}`).get(...params)
+    ).count;
+    const rows = await db
       .prepare(
         `SELECT ${POST_COLUMNS}, ${TAGS_SUBQUERY} ${POST_JOINS}
          WHERE ${whereSql} ORDER BY b.updated_at DESC LIMIT ? OFFSET ?`
@@ -1025,8 +1035,8 @@ export function createBlogApi() {
     });
   }
 
-  function handleAdminPost(id, res) {
-    const row = db
+  async function handleAdminPost(id, res) {
+    const row = await db
       .prepare(
         `SELECT ${POST_COLUMNS}, b.content, ${TAGS_SUBQUERY}, ${TAGS_IDS_SUBQUERY}
          ${POST_JOINS} WHERE b.id = ?`
@@ -1036,13 +1046,13 @@ export function createBlogApi() {
     return sendJson(res, 200, { post: mapPost(row, { withContent: true }) });
   }
 
-  function validateRelations(payload) {
+  async function validateRelations(payload) {
     if (payload.author_id) {
-      const author = db.prepare("SELECT id FROM authors WHERE id = ?").get(payload.author_id);
+      const author = await db.prepare("SELECT id FROM authors WHERE id = ?").get(payload.author_id);
       assert(author, 400, "Selected author does not exist");
     }
     if (payload.category_id) {
-      const category = db.prepare("SELECT id FROM categories WHERE id = ?").get(payload.category_id);
+      const category = await db.prepare("SELECT id FROM categories WHERE id = ?").get(payload.category_id);
       assert(category, 400, "Selected category does not exist");
     }
   }
@@ -1050,7 +1060,7 @@ export function createBlogApi() {
   async function handleCreatePost(req, res) {
     const body = await parseJsonBody(req, config.maxJsonBytes);
     const data = validatePostPayload(body);
-    validateRelations(data);
+    await validateRelations(data);
 
     const now = nowIso();
     const status = data.status || "draft";
@@ -1063,12 +1073,12 @@ export function createBlogApi() {
       throw new HttpError(400, "Invalid publication date");
     }
 
-    const slug = uniqueSlug(db, data.slug || data.title);
+    const slug = await uniqueSlug(db, data.slug || data.title);
     const excerpt = data.excerpt || stripMarkdown(data.content, 220);
     const metaTitle = data.meta_title || data.title;
     const metaDescription = data.meta_description || excerpt.slice(0, 160);
 
-    const result = db
+    const result = await db
       .prepare(
         `INSERT INTO blogs (
           title, slug, excerpt, content, cover_image, author_id, category_id,
@@ -1095,16 +1105,16 @@ export function createBlogApi() {
       );
 
     const id = Number(result.lastInsertRowid);
-    setPostTags(db, id, data.tags || []);
+    await setPostTags(db, id, data.tags || []);
     return handleAdminPost(id, res);
   }
 
   async function handleUpdatePost(req, res, id) {
-    const existing = db.prepare("SELECT * FROM blogs WHERE id = ?").get(id);
+    const existing = await db.prepare("SELECT * FROM blogs WHERE id = ?").get(id);
     if (!existing) throw new HttpError(404, "Article not found");
     const body = await parseJsonBody(req, config.maxJsonBytes);
     const data = validatePostPayload(body, { partial: true });
-    validateRelations(data);
+    await validateRelations(data);
 
     const nextStatus = data.status ?? existing.status;
     let nextPublishedAt = data.published_at !== undefined ? data.published_at : existing.published_at;
@@ -1115,7 +1125,7 @@ export function createBlogApi() {
 
     const nextSlug =
       data.slug && data.slug !== existing.slug
-        ? uniqueSlug(db, data.slug, id)
+        ? await uniqueSlug(db, data.slug, id)
         : existing.slug;
 
     const fields = {
@@ -1139,7 +1149,7 @@ export function createBlogApi() {
     if (!fields.meta_title) fields.meta_title = fields.title;
     if (!fields.meta_description) fields.meta_description = String(fields.excerpt || "").slice(0, 160);
 
-    db.prepare(
+    await db.prepare(
       `UPDATE blogs SET
         title = ?, slug = ?, excerpt = ?, content = ?, cover_image = ?,
         author_id = ?, category_id = ?, status = ?, is_featured = ?,
@@ -1163,32 +1173,32 @@ export function createBlogApi() {
       id
     );
 
-    if (data.tags !== undefined) setPostTags(db, id, data.tags);
+    if (data.tags !== undefined) await setPostTags(db, id, data.tags);
     return handleAdminPost(id, res);
   }
 
-  function handleDeletePost(id, res) {
-    const result = db.prepare("DELETE FROM blogs WHERE id = ?").run(id);
+  async function handleDeletePost(id, res) {
+    const result = await db.prepare("DELETE FROM blogs WHERE id = ?").run(id);
     if (!result.changes) throw new HttpError(404, "Article not found");
     return sendJson(res, 200, { ok: true, id });
   }
 
   async function handlePostAction(id, action, req, res) {
-    const post = db.prepare("SELECT id, status, published_at FROM blogs WHERE id = ?").get(id);
+    const post = await db.prepare("SELECT id, status, published_at FROM blogs WHERE id = ?").get(id);
     if (!post) throw new HttpError(404, "Article not found");
     const body = await parseJsonBody(req, 4096).catch(() => ({}));
 
     if (action === "publish") {
       const publishedAt = post.published_at || nowIso();
-      db.prepare("UPDATE blogs SET status = 'published', published_at = ?, updated_at = ? WHERE id = ?").run(
+      await db.prepare("UPDATE blogs SET status = 'published', published_at = ?, updated_at = ? WHERE id = ?").run(
         publishedAt,
         nowIso(),
         id
       );
     } else if (action === "unpublish") {
-      db.prepare("UPDATE blogs SET status = 'draft', updated_at = ? WHERE id = ?").run(nowIso(), id);
+      await db.prepare("UPDATE blogs SET status = 'draft', updated_at = ? WHERE id = ?").run(nowIso(), id);
     } else if (action === "feature" || action === "unfeature") {
-      db.prepare("UPDATE blogs SET is_featured = ?, updated_at = ? WHERE id = ?").run(
+      await db.prepare("UPDATE blogs SET is_featured = ?, updated_at = ? WHERE id = ?").run(
         action === "feature" ? 1 : 0,
         nowIso(),
         id
@@ -1196,7 +1206,7 @@ export function createBlogApi() {
     } else if (action === "schedule") {
       const when = toIso(body.published_at);
       assert(when && Date.parse(when) > Date.now(), 400, "Provide a future publication date");
-      db.prepare("UPDATE blogs SET status = 'scheduled', published_at = ?, updated_at = ? WHERE id = ?").run(
+      await db.prepare("UPDATE blogs SET status = 'scheduled', published_at = ?, updated_at = ? WHERE id = ?").run(
         when,
         nowIso(),
         id
@@ -1205,8 +1215,8 @@ export function createBlogApi() {
     return handleAdminPost(id, res);
   }
 
-  function handleExport(res) {
-    const posts = db
+  async function handleExport(res) {
+    const posts = await db
       .prepare(`SELECT ${POST_COLUMNS}, b.content, ${TAGS_SUBQUERY} ${POST_JOINS} ORDER BY b.updated_at DESC`)
       .all();
     const payload = JSON.stringify(
@@ -1228,11 +1238,11 @@ export function createBlogApi() {
     authors: { table: "authors", label: "Author" },
   };
 
-  function handleTaxonomyList(kind, res) {
+  async function handleTaxonomyList(kind, res) {
     const configItem = TAXONOMY[kind];
     if (!configItem) throw new HttpError(404, "Unknown taxonomy");
     if (kind === "categories") {
-      const items = db
+      const items = await db
         .prepare(
           `SELECT c.*, (SELECT COUNT(*) FROM blogs b WHERE b.category_id = c.id) AS post_count
            FROM categories c ORDER BY c.name`
@@ -1241,7 +1251,7 @@ export function createBlogApi() {
       return sendJson(res, 200, { items });
     }
     if (kind === "tags") {
-      const items = db
+      const items = await db
         .prepare(
           `SELECT t.*, (SELECT COUNT(*) FROM blog_tags bt WHERE bt.tag_id = t.id) AS post_count
            FROM tags t ORDER BY t.name`
@@ -1249,7 +1259,7 @@ export function createBlogApi() {
         .all();
       return sendJson(res, 200, { items });
     }
-    const items = db
+    const items = await db
       .prepare(
         `SELECT a.*, (SELECT COUNT(*) FROM blogs b WHERE b.author_id = a.id) AS post_count
          FROM authors a ORDER BY a.name`
@@ -1267,28 +1277,28 @@ export function createBlogApi() {
 
     if (kind === "categories") {
       const slug = slugify(body.slug || name, "category");
-      const exists = db.prepare("SELECT id FROM categories WHERE slug = ?").get(slug);
+      const exists = await db.prepare("SELECT id FROM categories WHERE slug = ?").get(slug);
       assert(!exists, 409, "A category with this slug already exists");
-      const result = db
+      const result = await db
         .prepare("INSERT INTO categories (name, slug, description, created_at) VALUES (?, ?, ?, ?)")
         .run(name, slug, String(body.description || "").slice(0, 300), nowIso());
       return sendJson(res, 201, {
-        item: db.prepare("SELECT * FROM categories WHERE id = ?").get(Number(result.lastInsertRowid)),
+        item: await db.prepare("SELECT * FROM categories WHERE id = ?").get(Number(result.lastInsertRowid)),
       });
     }
     if (kind === "tags") {
       const slug = slugify(body.slug || name, "tag");
-      db.prepare("INSERT INTO tags (name, slug) VALUES (?, ?) ON CONFLICT(slug) DO UPDATE SET name = excluded.name").run(
+      await db.prepare("INSERT INTO tags (name, slug) VALUES (?, ?) ON CONFLICT(slug) DO UPDATE SET name = excluded.name").run(
         name,
         slug
       );
-      return sendJson(res, 201, { item: db.prepare("SELECT * FROM tags WHERE slug = ?").get(slug) });
+      return sendJson(res, 201, { item: await db.prepare("SELECT * FROM tags WHERE slug = ?").get(slug) });
     }
 
     const slug = slugify(body.slug || name, "author");
-    const exists = db.prepare("SELECT id FROM authors WHERE slug = ?").get(slug);
+    const exists = await db.prepare("SELECT id FROM authors WHERE slug = ?").get(slug);
     assert(!exists, 409, "An author with this slug already exists");
-    const result = db
+    const result = await db
       .prepare(
         `INSERT INTO authors (name, slug, role, bio, avatar_url, email, github, linkedin, twitter, created_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -1308,7 +1318,7 @@ export function createBlogApi() {
         nowIso()
       );
     return sendJson(res, 201, {
-      item: db.prepare("SELECT * FROM authors WHERE id = ?").get(Number(result.lastInsertRowid)),
+      item: await db.prepare("SELECT * FROM authors WHERE id = ?").get(Number(result.lastInsertRowid)),
     });
   }
 
@@ -1316,14 +1326,14 @@ export function createBlogApi() {
     const configItem = TAXONOMY[kind];
     if (!configItem) throw new HttpError(404, "Unknown taxonomy");
     const body = await parseJsonBody(req, 64 * 1024);
-    const existing = db.prepare(`SELECT * FROM ${configItem.table} WHERE id = ?`).get(id);
+    const existing = await db.prepare(`SELECT * FROM ${configItem.table} WHERE id = ?`).get(id);
     if (!existing) throw new HttpError(404, `${configItem.label} not found`);
 
     if (kind === "categories") {
       const name = body.name !== undefined ? String(body.name).trim() : existing.name;
       assert(name.length >= 2 && name.length <= 80, 400, "Name must be 2-80 characters");
-      const slug = body.slug ? uniqueTaxonomySlug(db, "categories", body.slug) : existing.slug;
-      db.prepare("UPDATE categories SET name = ?, slug = ?, description = ? WHERE id = ?").run(
+      const slug = body.slug ? await uniqueTaxonomySlug(db, "categories", body.slug) : existing.slug;
+      await db.prepare("UPDATE categories SET name = ?, slug = ?, description = ? WHERE id = ?").run(
         name,
         slug,
         body.description !== undefined ? String(body.description).slice(0, 300) : existing.description,
@@ -1332,7 +1342,7 @@ export function createBlogApi() {
     } else if (kind === "tags") {
       const name = body.name !== undefined ? String(body.name).trim() : existing.name;
       assert(name.length >= 2 && name.length <= 80, 400, "Name must be 2-80 characters");
-      db.prepare("UPDATE tags SET name = ? WHERE id = ?").run(name, id);
+      await db.prepare("UPDATE tags SET name = ? WHERE id = ?").run(name, id);
     } else {
       const fields = ["name", "role", "bio", "avatar_url", "email", "github", "linkedin", "twitter"];
       const values = fields.map((field) => {
@@ -1346,19 +1356,19 @@ export function createBlogApi() {
         }
         return raw;
       });
-      db.prepare(
+      await db.prepare(
         `UPDATE authors SET name = ?, role = ?, bio = ?, avatar_url = ?, email = ?, github = ?, linkedin = ?, twitter = ? WHERE id = ?`
       ).run(...values, id);
     }
     return sendJson(res, 200, {
-      item: db.prepare(`SELECT * FROM ${configItem.table} WHERE id = ?`).get(id),
+      item: await db.prepare(`SELECT * FROM ${configItem.table} WHERE id = ?`).get(id),
     });
   }
 
-  function handleTaxonomyDelete(kind, id, res) {
+  async function handleTaxonomyDelete(kind, id, res) {
     const configItem = TAXONOMY[kind];
     if (!configItem) throw new HttpError(404, "Unknown taxonomy");
-    const result = db.prepare(`DELETE FROM ${configItem.table} WHERE id = ?`).run(id);
+    const result = await db.prepare(`DELETE FROM ${configItem.table} WHERE id = ?`).run(id);
     if (!result.changes) throw new HttpError(404, `${configItem.label} not found`);
     return sendJson(res, 200, { ok: true, id });
   }
@@ -1377,8 +1387,8 @@ export function createBlogApi() {
 
     const ext = ALLOWED_UPLOAD_TYPES.get(detected);
     const safeName = `${crypto.randomUUID()}.${ext}`;
-    fs.writeFileSync(path.join(config.uploadDir, safeName), buffer, { mode: 0o644 });
-    db.prepare(
+    await saveUpload(buffer, safeName, detected);
+    await db.prepare(
       "INSERT INTO uploads (filename, original_name, mime, size, created_at) VALUES (?, ?, ?, ?, ?)"
     ).run(safeName, path.basename(filename).slice(0, 120), detected, buffer.length, nowIso());
 
@@ -1390,19 +1400,20 @@ export function createBlogApi() {
     });
   }
 
-  function handleDeleteUpload(filename, res) {
+  async function handleDeleteUpload(filename, res) {
     if (!UPLOAD_FILENAME.test(filename)) throw new HttpError(400, "Invalid filename");
-    const record = db.prepare("SELECT filename FROM uploads WHERE filename = ?").get(filename);
+    const record = await db.prepare("SELECT filename FROM uploads WHERE filename = ?").get(filename);
     if (!record) throw new HttpError(404, "Upload not found");
 
-    const used = db
-      .prepare("SELECT COUNT(*) AS count FROM blogs WHERE cover_image LIKE ? OR content LIKE ?")
-      .get(`%/api/uploads/${filename}%`, `%/api/uploads/${filename}%`).count;
+    const used = (
+      await db
+        .prepare("SELECT COUNT(*) AS count FROM blogs WHERE cover_image LIKE ? OR content LIKE ?")
+        .get(`%/api/uploads/${filename}%`, `%/api/uploads/${filename}%`)
+    ).count;
     assert(used === 0, 409, "This image is still used by an article");
 
-    const filePath = path.join(config.uploadDir, filename);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    db.prepare("DELETE FROM uploads WHERE filename = ?").run(filename);
+    await deleteUpload(filename);
+    await db.prepare("DELETE FROM uploads WHERE filename = ?").run(filename);
     return sendJson(res, 200, { ok: true });
   }
 
@@ -1410,11 +1421,11 @@ export function createBlogApi() {
 }
 
 /** Write static SEO artifacts (used by `npm run blog:export` / build). */
-export function writeStaticFeeds(outDir) {
-  const db = getDatabase();
-  ensureAdmin(db);
-  publishDueScheduled(db);
-  const posts = db
+export async function writeStaticFeeds(outDir) {
+  const db = await initDatabase();
+  await ensureAdmin(db);
+  await publishDueScheduled(db);
+  const posts = await db
     .prepare(
       `SELECT ${POST_COLUMNS}, b.content ${POST_JOINS}
        WHERE ${publicPostClause()} ORDER BY b.published_at DESC LIMIT 30`
@@ -1422,7 +1433,7 @@ export function writeStaticFeeds(outDir) {
     .all(nowIso());
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(path.join(outDir, "feed.xml"), buildRss(posts), "utf8");
-  fs.writeFileSync(path.join(outDir, "sitemap.xml"), buildSitemap(db), "utf8");
+  fs.writeFileSync(path.join(outDir, "sitemap.xml"), await buildSitemap(db), "utf8");
   return { posts: posts.length, outDir };
 }
 

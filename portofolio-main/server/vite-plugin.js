@@ -5,19 +5,30 @@ import { createBlogApi } from "./api.js";
  * `npm run dev` is a single command and cookies remain same-origin.
  */
 export function blogApiPlugin() {
-  let handler = null;
+  let handlerPromise = null;
   const getHandler = () => {
-    if (!handler) handler = createBlogApi();
-    return handler;
+    if (!handlerPromise) handlerPromise = createBlogApi();
+    return handlerPromise;
+  };
+
+  const middleware = (req, res, next) => {
+    getHandler()
+      .then((handler) => handler(req, res, next))
+      .catch((error) => {
+        console.error("[blog-api] dev middleware failed:", error);
+        res.statusCode = 500;
+        res.setHeader("Content-Type", "application/json; charset=utf-8");
+        res.end(JSON.stringify({ error: "Blog API failed to start" }));
+      });
   };
 
   return {
     name: "portfolio-blog-api",
     configureServer(server) {
-      server.middlewares.use((req, res, next) => getHandler()(req, res, next));
+      server.middlewares.use(middleware);
     },
     configurePreviewServer(server) {
-      server.middlewares.use((req, res, next) => getHandler()(req, res, next));
+      server.middlewares.use(middleware);
     },
   };
 }

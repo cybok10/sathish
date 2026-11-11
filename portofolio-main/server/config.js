@@ -44,11 +44,19 @@ const uploadDir = process.env.BLOG_UPLOAD_DIR
   ? path.resolve(process.env.BLOG_UPLOAD_DIR)
   : path.join(SERVER_DIR, "uploads");
 
-fs.mkdirSync(dataDir, { recursive: true });
-fs.mkdirSync(uploadDir, { recursive: true });
+// The upload directory is only used by the local-filesystem fallback. On a
+// serverless platform the files live in Supabase Storage, so there is no
+// point creating a directory that will be thrown away.
+const usesLocalFilesystem =
+  !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const basePath = (process.env.BASE_PATH || "/portofolio").replace(/\/$/, "");
-const rawSiteUrl = (process.env.SITE_URL || "https://cybok10.github.io/portofolio").replace(/\/$/, "");
+if (usesLocalFilesystem) {
+  fs.mkdirSync(dataDir, { recursive: true });
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+const basePath = (process.env.BASE_PATH || "/").replace(/\/$/, "");
+const rawSiteUrl = (process.env.SITE_URL || "http://localhost:5173").replace(/\/$/, "");
 const siteOrigin =
   basePath && rawSiteUrl.endsWith(basePath) ? rawSiteUrl.slice(0, -basePath.length) : rawSiteUrl;
 
@@ -58,7 +66,16 @@ export const config = {
   port: Number(process.env.API_PORT || 8787),
   dataDir,
   uploadDir,
-  dbFile: path.join(dataDir, "blog.db"),
+  /**
+   * The PostgreSQL connection string. Use the Supabase *session pooler*
+   * (port 6543, `?pgbouncer=true`) from a serverless runtime — the direct
+   * connection runs out of connections quickly.
+   */
+  databaseUrl: process.env.DATABASE_URL || process.env.SUPABASE_DATABASE_URL || "",
+  supabaseUrl: process.env.SUPABASE_URL || "",
+  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+  supabaseAnonKey: process.env.SUPABASE_ANON_KEY || "",
+  uploadBucket: process.env.BLOG_UPLOAD_BUCKET || "blog-uploads",
   siteUrl: siteOrigin.replace(/\/$/, ""),
   basePath,
   admin: {

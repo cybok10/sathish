@@ -5,44 +5,69 @@ import { nowIso, parseCookies } from "./utils.js";
 const COOKIE_NAME = "blog_session";
 const SCRYPT_KEYLEN = 64;
 
-export function hashPassword(password) {
+/**
+ * Scrypt, promisified.
+ *
+ * The synchronous version blocks the event loop, which on a serverless
+ * runtime means one slow login can stall every other request sharing the
+ * instance. The parameters are the same, so existing hashes stay valid.
+ */
+function scrypt(password, salt, keylen) {
+  return new Promise((resolve, reject) => {
+    crypto.scrypt(password, salt, keylen, (error, derived) => {
+      if (error) reject(error);
+      else resolve(derived);
+    });
+  });
+}
+
+export async function hashPassword(password) {
   const salt = crypto.randomBytes(16);
-  const derived = crypto.scryptSync(password, salt, SCRYPT_KEYLEN);
+  const derived = await scrypt(password, salt, SCRYPT_KEYLEN);
   return `scrypt$${salt.toString("hex")}$${derived.toString("hex")}`;
 }
 
-export function verifyPassword(password, stored) {
+export async function verifyPassword(password, stored) {
   try {
     const [scheme, saltHex, hashHex] = String(stored).split("$");
     if (scheme !== "scrypt" || !saltHex || !hashHex) return false;
     const salt = Buffer.from(saltHex, "hex");
     const expected = Buffer.from(hashHex, "hex");
-    const actual = crypto.scryptSync(password, salt, expected.length);
+    const actual = await scrypt(password, salt, expected.length);
     return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
   } catch {
     return false;
   }
 }
 
-export function ensureAdmin(db) {
-  const existing = db
+export async function ensureAdmin(db) {
+  const existing = await db
     .prepare("SELECT id, email, name, password_hash FROM admins WHERE email = ?")
     .get(config.admin.email);
   if (existing) {
     // An explicitly configured ADMIN_PASSWORD always wins over the stored hash,
     // so rotating it in server/.env takes effect on the next start.
-    if (config.admin.passwordConfigured && !verifyPassword(config.admin.password, existing.password_hash)) {
-      db.prepare("UPDATE admins SET password_hash = ? WHERE id = ?")
-        .run(hashPassword(config.admin.password), existing.id);
+    if (
+      config.admin.passwordConfigured &&
+      !(await verifyPassword(config.admin.password, existing.password_hash))
+    ) {
+      await db
+        .prepare("UPDATE admins SET password_hash = ? WHERE id = ?")
+        .run(await hashPassword(config.admin.password), existing.id);
     }
     return { id: existing.id, email: existing.email, name: existing.name };
   }
 
-  const result = db
+  const result = await db
     .prepare(
       "INSERT INTO admins (email, name, password_hash, role, created_at) VALUES (?, ?, ?, 'admin', ?)"
     )
-    .run(config.admin.email, config.admin.name, hashPassword(config.admin.password), nowIso());
+    .run(
+      config.admin.email,
+      config.admin.name,
+      await hashPassword(config.admin.password),
+      nowIso()
+    );
 
   if (!config.admin.passwordConfigured) {
     console.warn(
@@ -62,32 +87,34 @@ function sha256(value) {
   return crypto.createHash("sha256").update(value).digest("hex");
 }
 
-export function createSession(db, adminId) {
+export async function createSession(db, adminId) {
   const token = crypto.randomBytes(32).toString("base64url");
   const csrf = crypto.randomBytes(32).toString("base64url");
   const createdAt = nowIso();
   const expiresAt = new Date(Date.now() + config.sessionTtlMs).toISOString();
-  db.prepare(
-    "INSERT INTO sessions (id, admin_id, csrf_token, created_at, expires_at) VALUES (?, ?, ?, ?, ?)"
-  ).run(sha256(token), adminId, csrf, createdAt, expiresAt);
+  await db
+    .prepare(
+      "INSERT INTO sessions (id, admin_id, csrf_token, created_at, expires_at) VALUES (?, ?, ?, ?, ?)"
+    )
+    .run(sha256(token), adminId, csrf, createdAt, expiresAt);
   return { token, csrf, expiresAt };
 }
 
-export function destroySession(db, token) {
+export async function destroySession(db, token) {
   if (!token) return;
-  db.prepare("DELETE FROM sessions WHERE id = ?").run(sha256(token));
+  await db.prepare("DELETE FROM sessions WHERE id = ?").run(sha256(token));
 }
 
-export function cleanupSessions(db) {
-  db.prepare("DELETE FROM sessions WHERE expires_at <= ?").run(nowIso());
+export async function cleanupSessions(db) {
+  await db.prepare("DELETE FROM sessions WHERE expires_at <= ?").run(nowIso());
 }
 
-export function getSession(req, db) {
+export async function getSession(req, db) {
   const cookies = parseCookies(req.headers.cookie);
   const token = cookies[COOKIE_NAME];
   if (!token) return null;
 
-  const row = db
+  const row = await db
     .prepare(
       `SELECT s.id AS session_id, s.csrf_token, s.expires_at,
               a.id AS admin_id, a.email, a.name, a.role
@@ -98,7 +125,7 @@ export function getSession(req, db) {
 
   if (!row) return null;
   if (Date.parse(row.expires_at) <= Date.now()) {
-    db.prepare("DELETE FROM sessions WHERE id = ?").run(row.session_id);
+    await db.prepare("DELETE FROM sessions WHERE id = ?").run(row.session_id);
     return null;
   }
   return { ...row, token };
@@ -151,8 +178,8 @@ export function sameOrigin(req) {
  * Returns the authenticated session or writes a JSON error and returns null.
  * `mutating` additionally enforces same-origin + CSRF token checks.
  */
-export function requireAdmin(req, res, db, { mutating = false } = {}) {
-  const session = getSession(req, db);
+export async function requireAdmin(req, res, db, { mutating = false } = {}) {
+  const session = await getSession(req, db);
   if (!session) {
     res.writeHead(401, { "Content-Type": "application/json; charset=utf-8" });
     res.end(JSON.stringify({ error: "Authentication required" }));

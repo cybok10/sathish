@@ -3,7 +3,7 @@ import { config } from "./config.js";
 import { createBlogApi } from "./api.js";
 import { closeDatabase } from "./db.js";
 
-const handler = createBlogApi();
+const handler = await createBlogApi();
 
 const server = http.createServer((req, res) => {
   handler(req, res, () => {
@@ -18,8 +18,8 @@ server.listen(config.port, () => {
 });
 
 function shutdown() {
-  server.close(() => {
-    closeDatabase();
+  server.close(async () => {
+    await closeDatabase();
     process.exit(0);
   });
   setTimeout(() => process.exit(1), 5000).unref();
