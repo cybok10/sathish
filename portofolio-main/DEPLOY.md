@@ -33,14 +33,20 @@ GitHub ──▶ Vercel ──▶ static site (CDN)  +  /api/* serverless functi
    > (`5432`) exhausts the connection limit as soon as a few serverless
    > functions run at once.
 
-4. **Get the API keys.** *Project Settings → API*:
-   - `Project URL` → `SUPABASE_URL`
-   - `service_role` key → `SUPABASE_SERVICE_ROLE_KEY` (server only — never expose
-     it to the browser)
-   - `anon` key → `SUPABASE_ANON_KEY`
+4. **Get the API keys.** *Project Settings → API*. Supabase now issues two
+   kinds of key, and the names matter:
+
+   | Environment variable | Key | Notes |
+   |---|---|---|
+   | `SUPABASE_ANON_KEY` | `sb_publishable_…` | The public key. Safe in the browser. |
+   | `SUPABASE_SERVICE_ROLE_KEY` | `sb_secret_…` | Server only — full access, never exposed to the browser. |
+
+   > These replace the old `anon` / `service_role` pair. The `sb_secret_…`
+   > key is the one that belongs in `SUPABASE_SERVICE_ROLE_KEY`; putting the
+   > publishable key there silently breaks every upload.
 
 5. **Create the upload bucket.** *Storage → New bucket*:
-   - name it exactly `blog-uploads`
+   - name it exactly `blog-uploads` (or set `BLOG_UPLOAD_BUCKET` to match)
    - **keep it private** — the API serves the files after checking the
      `uploads` table, so the bucket should not be public
 

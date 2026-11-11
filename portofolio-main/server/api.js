@@ -448,16 +448,16 @@ export async function createBlogApi() {
         const now = nowIso();
         const totals = await db
           .prepare(
-            `SELECT COUNT(*) AS articles, COALESCE(SUM(b.view_count), 0) AS views
+            `SELECT COUNT(*)::int AS articles, COALESCE(SUM(b.view_count), 0)::int AS views
              FROM blogs b WHERE ${publicPostClause()}`
           )
           .get(now);
-        const categories = (await db.prepare("SELECT COUNT(*) AS count FROM categories").get()).count;
-        const authors = (await db.prepare("SELECT COUNT(*) AS count FROM authors").get()).count;
+        const categories = (await db.prepare("SELECT COUNT(*)::int AS count FROM categories").get()).count;
+        const authors = (await db.prepare("SELECT COUNT(*)::int AS count FROM authors").get()).count;
         const tags = (
           await db
             .prepare(
-              `SELECT COUNT(DISTINCT bt.tag_id) AS count FROM blog_tags bt
+              `SELECT COUNT(DISTINCT bt.tag_id)::int AS count FROM blog_tags bt
                JOIN blogs b ON b.id = bt.blog_id WHERE ${publicPostClause()}`
             )
             .get(now)
@@ -475,7 +475,7 @@ export async function createBlogApi() {
         const rows = await db
           .prepare(
             `SELECT c.id, c.name, c.slug, c.description,
-                    COUNT(b.id) AS post_count
+                    COUNT(b.id)::int AS post_count
              FROM categories c
              LEFT JOIN blogs b ON b.category_id = c.id AND ${publicPostClause("b")}
              GROUP BY c.id
@@ -487,7 +487,7 @@ export async function createBlogApi() {
       if (method === "GET" && pathname === "/blog/tags") {
         const rows = await db
           .prepare(
-            `SELECT t.id, t.name, t.slug, COUNT(bt.blog_id) AS post_count
+            `SELECT t.id, t.name, t.slug, COUNT(bt.blog_id)::int AS post_count
              FROM tags t
              LEFT JOIN blog_tags bt ON bt.tag_id = t.id
              LEFT JOIN blogs b ON b.id = bt.blog_id AND ${publicPostClause("b")}
@@ -501,7 +501,7 @@ export async function createBlogApi() {
         const rows = await db
           .prepare(
             `SELECT a.id, a.name, a.slug, a.role, a.bio, a.avatar_url, a.github, a.linkedin, a.twitter,
-                    COUNT(b.id) AS post_count
+                    COUNT(b.id)::int AS post_count
              FROM authors a
              LEFT JOIN blogs b ON b.author_id = a.id AND ${publicPostClause("b")}
              GROUP BY a.id
@@ -722,7 +722,7 @@ export async function createBlogApi() {
 
     const total = (
       await db
-        .prepare(`SELECT COUNT(*) AS count ${POST_JOINS} ${whereSql}`)
+        .prepare(`SELECT COUNT(*)::int AS count ${POST_JOINS} ${whereSql}`)
         .get(...params)
     ).count;
 
@@ -792,7 +792,7 @@ export async function createBlogApi() {
       .prepare(
         `SELECT ${POST_COLUMNS}, ${TAGS_SUBQUERY},
           (
-            SELECT COUNT(*) FROM blog_tags bt
+            SELECT COUNT(*)::int FROM blog_tags bt
             WHERE bt.blog_id = b.id AND bt.tag_id IN (SELECT tag_id FROM blog_tags WHERE blog_id = ?)
           ) AS shared_tags
          ${POST_JOINS}
@@ -860,7 +860,7 @@ export async function createBlogApi() {
     const now = nowIso();
     const total = (
       await db
-        .prepare(`SELECT COUNT(*) AS count ${POST_JOINS} WHERE ${publicPostClause()} AND c.slug = ?`)
+        .prepare(`SELECT COUNT(*)::int AS count ${POST_JOINS} WHERE ${publicPostClause()} AND c.slug = ?`)
         .get(now, slug)
     ).count;
     const rows = await db
@@ -894,7 +894,7 @@ export async function createBlogApi() {
     const now = nowIso();
     const total = (
       await db
-        .prepare(`SELECT COUNT(*) AS count ${POST_JOINS} WHERE ${publicPostClause()} AND a.slug = ?`)
+        .prepare(`SELECT COUNT(*)::int AS count ${POST_JOINS} WHERE ${publicPostClause()} AND a.slug = ?`)
         .get(now, slug)
     ).count;
     const rows = await db
@@ -972,11 +972,11 @@ export async function createBlogApi() {
     const totals = await db
       .prepare(
         `SELECT
-          COUNT(*) AS total,
-          SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) AS published,
-          SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END) AS draft,
-          SUM(CASE WHEN status = 'scheduled' THEN 1 ELSE 0 END) AS scheduled,
-          COALESCE(SUM(view_count), 0) AS views
+          COUNT(*)::int AS total,
+          SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END)::int AS published,
+          SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END)::int AS draft,
+          SUM(CASE WHEN status = 'scheduled' THEN 1 ELSE 0 END)::int AS scheduled,
+          COALESCE(SUM(view_count), 0)::int AS views
         FROM blogs`
       )
       .get();
@@ -986,8 +986,8 @@ export async function createBlogApi() {
     const recent = await db
       .prepare(`SELECT ${POST_COLUMNS}, ${TAGS_SUBQUERY} ${POST_JOINS} ORDER BY b.updated_at DESC LIMIT 5`)
       .all();
-    const subscribers = (await db.prepare("SELECT COUNT(*) AS count FROM subscribers WHERE status = 'active'").get()).count;
-    const categories = (await db.prepare("SELECT COUNT(*) AS count FROM categories").get()).count;
+    const subscribers = (await db.prepare("SELECT COUNT(*)::int AS count FROM subscribers WHERE status = 'active'").get()).count;
+    const categories = (await db.prepare("SELECT COUNT(*)::int AS count FROM categories").get()).count;
     return sendJson(res, 200, {
       totals: {
         total: totals.total || 0,
@@ -1021,7 +1021,7 @@ export async function createBlogApi() {
     }
     const whereSql = where.join(" AND ");
     const total = (
-      await db.prepare(`SELECT COUNT(*) AS count ${POST_JOINS} WHERE ${whereSql}`).get(...params)
+      await db.prepare(`SELECT COUNT(*)::int AS count ${POST_JOINS} WHERE ${whereSql}`).get(...params)
     ).count;
     const rows = await db
       .prepare(
@@ -1244,7 +1244,7 @@ export async function createBlogApi() {
     if (kind === "categories") {
       const items = await db
         .prepare(
-          `SELECT c.*, (SELECT COUNT(*) FROM blogs b WHERE b.category_id = c.id) AS post_count
+          `SELECT c.*, (SELECT COUNT(*)::int FROM blogs b WHERE b.category_id = c.id) AS post_count
            FROM categories c ORDER BY c.name`
         )
         .all();
@@ -1253,7 +1253,7 @@ export async function createBlogApi() {
     if (kind === "tags") {
       const items = await db
         .prepare(
-          `SELECT t.*, (SELECT COUNT(*) FROM blog_tags bt WHERE bt.tag_id = t.id) AS post_count
+          `SELECT t.*, (SELECT COUNT(*)::int FROM blog_tags bt WHERE bt.tag_id = t.id) AS post_count
            FROM tags t ORDER BY t.name`
         )
         .all();
@@ -1261,7 +1261,7 @@ export async function createBlogApi() {
     }
     const items = await db
       .prepare(
-        `SELECT a.*, (SELECT COUNT(*) FROM blogs b WHERE b.author_id = a.id) AS post_count
+        `SELECT a.*, (SELECT COUNT(*)::int FROM blogs b WHERE b.author_id = a.id) AS post_count
          FROM authors a ORDER BY a.name`
       )
       .all();
@@ -1407,7 +1407,7 @@ export async function createBlogApi() {
 
     const used = (
       await db
-        .prepare("SELECT COUNT(*) AS count FROM blogs WHERE cover_image LIKE ? OR content LIKE ?")
+        .prepare("SELECT COUNT(*)::int AS count FROM blogs WHERE cover_image LIKE ? OR content LIKE ?")
         .get(`%/api/uploads/${filename}%`, `%/api/uploads/${filename}%`)
     ).count;
     assert(used === 0, 409, "This image is still used by an article");

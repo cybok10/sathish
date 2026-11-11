@@ -116,6 +116,7 @@ export function createPool(connectionString) {
 export function createDatabase(pool) {
   let transactionClient = null;
   const idColumnCache = new Map();
+  let idColumnPromise = null;
 
   const client = () => transactionClient || pool;
 
@@ -134,6 +135,30 @@ export function createDatabase(pool) {
   };
 
   /**
+   * Every table that has an `id` column.
+   *
+   * Fetched once per instance in a single round trip. Over a connection
+   * pooler every query costs real latency, so asking the catalog one
+   * table at a time would add a round trip per table on every cold start.
+   */
+  const loadIdColumns = async () => {
+    if (idColumnPromise) return idColumnPromise;
+    idColumnPromise = (async () => {
+      try {
+        const result = await query(
+          `SELECT table_name FROM information_schema.columns
+           WHERE table_schema = current_schema() AND column_name = 'id'`
+        );
+        for (const row of result.rows) idColumnCache.set(String(row.table_name).toLowerCase(), true);
+      } catch (error) {
+        // If the catalog cannot be read, fall back to the usual shape.
+        console.error("[blog-db] could not read the id column catalog:", error.message);
+      }
+    })();
+    return idColumnPromise;
+  };
+
+  /**
    * Whether a table has an `id` column, so `RETURNING id` is only added
    * where it makes sense. A failed statement would abort an open
    * transaction, so the answer has to be known before the query runs.
@@ -141,20 +166,8 @@ export function createDatabase(pool) {
   const tableHasId = async (table) => {
     if (!table) return false;
     if (idColumnCache.has(table)) return idColumnCache.get(table);
-    let hasId = true;
-    try {
-      const result = await client().query(
-        `SELECT EXISTS (
-           SELECT 1 FROM information_schema.columns
-           WHERE table_schema = current_schema() AND table_name = $1 AND column_name = 'id'
-         ) AS ok`,
-        [table]
-      );
-      hasId = Boolean(result.rows[0]?.ok);
-    } catch {
-      // If the catalog cannot be read, assume the usual shape.
-      hasId = true;
-    }
+    await loadIdColumns();
+    const hasId = idColumnCache.get(table) ?? false;
     idColumnCache.set(table, hasId);
     return hasId;
   };

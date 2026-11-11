@@ -45,7 +45,6 @@ export function initDatabase() {
     initPromise = (async () => {
       const db = getDatabase();
 
-      await db.exec(SCHEMA_SQL);
       await migrateSchema(db);
       await seedIfEmpty(db);
 
@@ -60,20 +59,30 @@ export function initDatabase() {
 }
 
 /**
- * Records the schema version, the way `PRAGMA user_version` used to.
- * Future migrations hang off the version check below.
+ * Applies the schema when it is missing or out of date.
+ *
+ * The steady state is a single round trip that reads the version, so a
+ * cold start does not re-run nineteen DDL statements every time. Against
+ * a connection pooler, where each query costs real latency, that is worth
+ * the check.
  */
 async function migrateSchema(db) {
-  const row = await db.prepare("SELECT version FROM schema_version LIMIT 1").get();
-  const current = Number(row?.version ?? 0);
+  let current = 0;
+  try {
+    const row = await db.prepare("SELECT version FROM schema_version LIMIT 1").get();
+    current = Number(row?.version ?? 0);
+  } catch {
+    // The schema has not been applied yet.
+    current = 0;
+  }
 
   if (current === SCHEMA_VERSION) return;
 
-  // Future migrations go here, guarded by the current version.
-  if (current < 1) {
-    await db.prepare("DELETE FROM schema_version").run();
-    await db.prepare("INSERT INTO schema_version (version) VALUES (?)").run(SCHEMA_VERSION);
-  }
+  // Future migrations hang off the version check below.
+  await db.exec(SCHEMA_SQL);
+  await db.exec(
+    `DELETE FROM schema_version; INSERT INTO schema_version (version) VALUES (${SCHEMA_VERSION});`
+  );
 }
 
 async function seedIfEmpty(db) {
