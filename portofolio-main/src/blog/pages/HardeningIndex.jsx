@@ -65,7 +65,7 @@ export default function HardeningIndex() {
 
       <ul className="blog-tac-hardening">
         {hardening.map((guide) => (
-          <li key={guide.slug}>
+          <li key={guide.slug} data-reveal>
             <Link to={`/blog/tactics/hardening/${guide.slug}`} className="blog-tac-hardcard">
               <span className="blog-tac-hardcard__head">
                 <ShieldIcon size={18} />

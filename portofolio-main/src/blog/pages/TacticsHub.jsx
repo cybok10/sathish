@@ -87,7 +87,7 @@ export default function TacticsHub() {
           </h2>
           <ul className="blog-tac-grid blog-tac-grid--compact">
             {matchedServices.map((service) => (
-              <li key={service.slug}>
+              <li key={service.slug} data-reveal>
                 <Link
                   to={`/blog/tactics/pentesting/services/${service.slug}`}
                   className="blog-tac-card"
@@ -103,7 +103,7 @@ export default function TacticsHub() {
               </li>
             ))}
             {matchedTools.map((tool) => (
-              <li key={tool.slug}>
+              <li key={tool.slug} data-reveal>
                 <Link to={`/blog/tactics/tools/${tool.slug}`} className="blog-tac-card">
                   <span className="blog-tac-card__top">
                     <span className="blog-tac-card__name">{tool.name}</span>
@@ -173,7 +173,7 @@ export default function TacticsHub() {
         <h2 className="blog-h2">Start with the highest-risk protocols</h2>
         <ul className="blog-tac-grid blog-tac-grid--compact">
           {topProtocols.map((service) => (
-            <li key={service.slug}>
+            <li key={service.slug} data-reveal>
               <Link
                 to={`/blog/tactics/pentesting/services/${service.slug}`}
                 className="blog-tac-card"

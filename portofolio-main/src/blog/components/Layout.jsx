@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { API_BASE, BASE, withBase } from "../base";
 import { Link, useRouter } from "../router";
+import { useReveal } from "../useReveal";
+import BlogBackdrop from "./BlogBackdrop";
+import ReadingProgress from "./ReadingProgress";
 import TacticsDropdown from "./TacticsDropdown";
 import {
   CloseIcon,
@@ -207,10 +210,20 @@ export function BlogFooter() {
 }
 
 export function BlogLayout({ children }) {
+  const { path } = useRouter();
+  useReveal(path);
+
   return (
     <div className="blog-shell">
+      <BlogBackdrop />
+      <a className="blog-skip" href="#blog-main">
+        Skip to content
+      </a>
       <BlogHeader />
-      <main>{children}</main>
+      <ReadingProgress />
+      <main id="blog-main" className="blog-main">
+        {children}
+      </main>
       <BlogFooter />
     </div>
   );

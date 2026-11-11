@@ -153,7 +153,7 @@ export default function BlogHome() {
           <>
             <TacticsPromo />
 
-            <section className="blog-section" aria-labelledby="featured-title">
+            <section className="blog-section" aria-labelledby="featured-title" data-reveal>
               <div className="blog-section-head">
                 <div>
                   <span className="blog-kicker">Editor's pick</span>
@@ -179,7 +179,7 @@ export default function BlogHome() {
               )}
             </section>
 
-            <section className="blog-section" id="latest" aria-labelledby="latest-title">
+            <section className="blog-section" id="latest" aria-labelledby="latest-title" data-reveal>
               <div className="blog-section-head">
                 <div>
                   <span className="blog-kicker">The archive</span>
@@ -260,7 +260,7 @@ export default function BlogHome() {
               </div>
             </section>
 
-            <section className="blog-section" aria-labelledby="categories-title">
+            <section className="blog-section" aria-labelledby="categories-title" data-reveal>
               <div className="blog-section-head">
                 <div>
                   <span className="blog-kicker">Browse</span>

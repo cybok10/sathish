@@ -1,7 +1,7 @@
 import { assetUrl } from "../base";
 import { Link } from "../router";
 import { formatDate, formatNumber } from "../api";
-import { ClockIcon, EyeIcon, ShieldIcon } from "./Icons";
+import { ArrowRight, ClockIcon, EyeIcon, ShieldIcon } from "./Icons";
 
 export function CoverImage({ src, alt, className = "" }) {
   const url = assetUrl(src);
@@ -75,7 +75,7 @@ export function PostCard({ post, variant = "default" }) {
 
   if (variant === "featured") {
     return (
-      <Link to={`/blog/${post.slug}`} className={className}>
+      <Link to={`/blog/${post.slug}`} className={className} data-reveal>
         <CoverImage src={post.cover_image} alt={post.title} />
         <div className="blog-card-body">
           <PostMeta post={post} showAuthor={false} linked={false} />
@@ -88,12 +88,16 @@ export function PostCard({ post, variant = "default" }) {
             </span>
           </div>
         </div>
+        <span className="blog-card__cue" aria-hidden="true">
+          Read article
+          <ArrowRight size={14} />
+        </span>
       </Link>
     );
   }
 
   return (
-    <Link to={`/blog/${post.slug}`} className={className}>
+    <Link to={`/blog/${post.slug}`} className={className} data-reveal>
       <CoverImage src={post.cover_image} alt={post.title} />
       <div className="blog-card-body">
         <PostMeta post={post} showAuthor={false} linked={false} />
@@ -106,13 +110,17 @@ export function PostCard({ post, variant = "default" }) {
           </span>
         </div>
       </div>
+      <span className="blog-card__cue" aria-hidden="true">
+        Read article
+        <ArrowRight size={14} />
+      </span>
     </Link>
   );
 }
 
 export function CompactPost({ post, index }) {
   return (
-    <Link className="blog-popular-item" to={`/blog/${post.slug}`}>
+    <Link className="blog-popular-item" to={`/blog/${post.slug}`} data-reveal>
       <span className="blog-popular-index">{String(index + 1).padStart(2, "0")}</span>
       <h3>{post.title}</h3>
       <span className="blog-popular-views">{formatNumber(post.view_count)} views</span>

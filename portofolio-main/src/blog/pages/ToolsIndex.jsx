@@ -106,7 +106,7 @@ export default function ToolsIndex() {
             <h2 className="blog-h2">{group.label}</h2>
             <ul className="blog-tac-grid blog-tac-grid--compact">
               {visible.map((tool) => (
-                <li key={tool.slug}>
+                <li key={tool.slug} data-reveal>
                   <Link to={`/blog/tactics/tools/${tool.slug}`} className="blog-tac-card">
                     <span className="blog-tac-card__top">
                       <span className="blog-tac-card__name">{tool.name}</span>
