@@ -3,7 +3,7 @@ import { api, formatNumber, queryString } from "../api";
 import { Link, useQuery, useRouter } from "../router";
 import { useApi } from "../useApi";
 import { useSeo } from "../seo";
-import { API_BASE, absoluteUrl } from "../base";
+import { absoluteUrl, apiUrl } from "../base";
 import { CompactPost, PostCard } from "../components/PostCard";
 import { Pagination } from "../components/Pagination";
 import { NewsletterSection } from "../components/Newsletter";
@@ -101,7 +101,7 @@ export default function BlogHome() {
               >
                 Read the latest <ArrowRight size={15} />
               </button>
-              <a className="blog-btn" href={`${API_BASE}/blog/feed.xml`}>
+              <a className="blog-btn" href={apiUrl("/blog/feed.xml")}>
                 <RssIcon size={15} /> RSS feed
               </a>
             </div>

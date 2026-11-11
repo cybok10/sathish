@@ -1,5 +1,5 @@
 import { api, formatDate, formatNumber } from "../api";
-import { API_BASE } from "../base";
+import { apiUrl } from "../base";
 import { Link } from "../router";
 import { useApi } from "../useApi";
 import { ErrorState } from "../components/States";
@@ -20,7 +20,7 @@ export default function Dashboard() {
           <p>Publishing overview for the research blog.</p>
         </div>
         <div className="admin-actions">
-          <a className="blog-btn blog-btn-sm" href={`${API_BASE}/admin/posts/export`}>
+          <a className="blog-btn blog-btn-sm" href={apiUrl("/admin/posts/export")}>
             Export JSON
           </a>
           <Link className="blog-btn blog-btn-primary blog-btn-sm" to="/admin/blog/new">

@@ -387,7 +387,8 @@ export async function createBlogApi() {
       return sendJson(res, 400, { error: "Invalid URL" });
     }
 
-    if (!url.pathname.startsWith("/api/")) {
+    // Both /api/... and /api?p=... reach the handler.
+    if (!url.pathname.startsWith("/api/") && url.pathname !== "/api") {
       return next ? next() : sendJson(res, 404, { error: "Not found" });
     }
 
@@ -396,7 +397,11 @@ export async function createBlogApi() {
 
     const ip = getClientIp(req);
     const method = req.method || "GET";
-    const pathname = url.pathname.slice(4) || "/";
+    // The REST path can travel either in the URL (/api/blog/posts) or in the
+    // `p` query parameter (/api?p=/blog/posts). The second form lets the
+    // whole API be served by a single function mounted at /api, which does
+    // not depend on catch-all routing.
+    const pathname = url.searchParams.get("p") || url.pathname.slice(4) || "/";
 
     try {
       if (method === "GET" && pathname === "/health") {

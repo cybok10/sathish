@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { API_BASE, BASE, withBase } from "../base";
+import { BASE, apiUrl, withBase } from "../base";
 import { Link, useRouter } from "../router";
 import { useReveal } from "../useReveal";
 import BlogBackdrop from "./BlogBackdrop";
@@ -157,7 +157,7 @@ export function BlogFooter() {
               <a href="mailto:sathish1012cybok@gmail.com" aria-label="Email">
                 <MailIcon />
               </a>
-              <a href={`${API_BASE}/blog/feed.xml`} aria-label="RSS feed">
+              <a href={apiUrl("/blog/feed.xml")} aria-label="RSS feed">
                 <RssIcon />
               </a>
             </div>
@@ -199,8 +199,8 @@ export function BlogFooter() {
         <div className="blog-footer-bottom">
           <span>© {new Date().getFullYear()} Sathish M. All rights reserved.</span>
           <span style={{ display: "flex", gap: "1rem", flexWrap: "wrap" }}>
-            <a href={`${API_BASE}/blog/feed.xml`}>RSS</a>
-            <a href={`${API_BASE}/blog/sitemap.xml`}>Sitemap</a>
+            <a href={apiUrl("/blog/feed.xml")}>RSS</a>
+            <a href={apiUrl("/blog/sitemap.xml")}>Sitemap</a>
             <Link to="/admin/blog">Admin</Link>
           </span>
         </div>

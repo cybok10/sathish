@@ -1,14 +1,12 @@
 import { createBlogApi } from "../server/api.js";
 
 /**
- * The blog API as a Vercel serverless function.
+ * The blog API as a catch-all serverless function.
  *
- * `api/[...path].js` catches every `/api/...` request and hands it to the
- * same handler the standalone server uses, so the behaviour is identical
- * in both places.
- *
- * The handler is created once per cold start — that is also when the
- * schema is applied and the starter content is seeded.
+ * `api/[...path].js` matches `/api/anything/here`, so the handler sees
+ * the original path and routes it exactly as it would in the standalone
+ * server. `api/index.js` serves the same handler at `/api`, where the
+ * path travels in the `p` query parameter.
  */
 const handler = await createBlogApi();
 

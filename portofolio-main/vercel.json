@@ -5,7 +5,7 @@
   "outputDirectory": "dist",
   "installCommand": "npm ci",
   "functions": {
-    "api/[...path].js": {
+    "api/**": {
       "maxDuration": 60
     }
   },

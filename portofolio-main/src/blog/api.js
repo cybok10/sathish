@@ -1,4 +1,4 @@
-import { API_BASE } from "./base";
+import { apiUrl } from "./base";
 
 const CSRF_KEY = "blog.csrf";
 
@@ -25,35 +25,46 @@ export class ApiError extends Error {
   }
 }
 
-export async function api(path, { method = "GET", body, signal, raw = false } = {}) {
+export async function api(path, { method = "GET", body, signal } = {}) {
   const headers = { Accept: "application/json" };
   if (body !== undefined) headers["Content-Type"] = "application/json";
   if (csrfToken && method !== "GET" && method !== "HEAD") {
     headers["X-CSRF-Token"] = csrfToken;
   }
 
-  let response;
-  try {
-    response = await fetch(`${API_BASE}${path}`, {
+  const send = (target) =>
+    fetch(target, {
       method,
       headers,
       credentials: "include",
       body: body === undefined ? undefined : JSON.stringify(body),
       signal,
     });
+
+  let response;
+  try {
+    response = await send(apiUrl(path));
   } catch (error) {
     if (error.name === "AbortError") throw error;
     throw new ApiError("Cannot reach the blog API. Is the server running?", 0);
   }
 
-  if (raw) return response;
-
   const data = await response.json().catch(() => ({}));
+
   if (!response.ok) {
+    // The hosting platform answers an unrouted path with its own JSON shape,
+    // where `error` is an object rather than a string.
+    const raw = data?.error;
+    const message =
+      typeof raw === "string"
+        ? raw
+        : typeof raw?.message === "string"
+          ? raw.message
+          : `Request failed (${response.status})`;
     if (response.status === 401 && path !== "/auth/login") {
       setCsrfToken(null);
     }
-    throw new ApiError(data.error || `Request failed (${response.status})`, response.status, data.details);
+    throw new ApiError(message, response.status, data.details);
   }
   return data;
 }
