@@ -56,7 +56,32 @@ if (usesLocalFilesystem) {
 }
 
 const basePath = (process.env.BASE_PATH || "/").replace(/\/$/, "");
-const rawSiteUrl = (process.env.SITE_URL || "http://localhost:5173").replace(/\/$/, "");
+
+/**
+ * The public origin of the site.
+ *
+ * `SITE_URL` is the explicit setting. Failing that, the hosting platform
+ * exposes the deployment URL in its own environment — without a fallback
+ * here the feed and the sitemap would advertise `localhost` to every
+ * reader and every crawler.
+ *
+ * On production the project URL is the canonical one; elsewhere the
+ * deployment URL is, because a preview is not served from the production
+ * domain.
+ */
+const vercelOrigin =
+  process.env.VERCEL_ENV === "production"
+    ? process.env.VERCEL_PROJECT_PRODUCTION_URL
+    : process.env.VERCEL_URL;
+
+const rawSiteUrl = (
+  process.env.SITE_URL ||
+  vercelOrigin ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "") ||
+  "http://localhost:5173"
+).replace(/\/$/, "");
 const siteOrigin =
   basePath && rawSiteUrl.endsWith(basePath) ? rawSiteUrl.slice(0, -basePath.length) : rawSiteUrl;
 

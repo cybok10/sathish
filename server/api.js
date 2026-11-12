@@ -229,8 +229,23 @@ function validatePostPayload(payload, { partial = false } = {}) {
   return out;
 }
 
-function buildRss(posts) {
-  const base = `${config.siteUrl}${config.basePath}/blog`;
+/**
+ * The origin the reader actually used.
+ *
+ * The feed and the sitemap must advertise the address people visit, not a
+ * setting that may never have been configured. Behind a proxy the host and
+ * protocol arrive in forwarding headers.
+ */
+function requestOrigin(req) {
+  if (!req?.headers) return "";
+  const host = req.headers["x-forwarded-host"] || req.headers.host;
+  if (!host) return "";
+  const proto = req.headers["x-forwarded-proto"] || (req.socket?.encrypted ? "https" : "http");
+  return `${String(proto).split(",")[0]}://${String(host).split(",")[0]}`;
+}
+
+function buildRss(posts, origin = config.siteUrl) {
+  const base = `${origin}${config.basePath}/blog`;
   const updated = posts[0]?.published_at || nowIso();
   const items = posts
     .map((post) => {
@@ -288,8 +303,8 @@ function tacticsUrls(base, now) {
   ];
 }
 
-async function buildSitemap(db) {
-  const base = `${config.siteUrl}${config.basePath}`;
+async function buildSitemap(db, origin = config.siteUrl) {
+  const base = `${origin}${config.basePath}`;
   const now = nowIso();
   const posts = await db
     .prepare(
@@ -378,7 +393,12 @@ export async function createBlogApi() {
   await ensureAdmin(db);
   await publishDueScheduled(db);
 
-  const loginLimit = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 8 });
+  const loginLimit = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 20 });
+  // A per-account bucket as well as the per-network one. Several writers
+  // often share an office address, and one person's typo should not lock
+  // everybody else out — while a guessed password still gets very few
+  // attempts against any single account.
+  const accountLimit = createRateLimiter({ windowMs: 10 * 60 * 1000, max: 8 });
   const publicLimit = createRateLimiter({ windowMs: 60 * 1000, max: 600 });
   const writeLimit = createRateLimiter({ windowMs: 60 * 1000, max: 120 });
   const uploadLimit = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 40 });
@@ -423,7 +443,9 @@ export async function createBlogApi() {
 
       // ---------- Auth ----------
       if (method === "POST" && pathname === "/auth/login") {
-        if (!loginLimit(ip)) throw new HttpError(429, "Too many login attempts. Try again later.");
+        if (!loginLimit(ip)) {
+          throw new HttpError(429, "Too many sign-in attempts from this network. Try again in a few minutes.");
+        }
         return await handleLogin(req, res);
       }
       if (method === "POST" && pathname === "/auth/logout") {
@@ -523,10 +545,10 @@ export async function createBlogApi() {
         return sendJson(res, 200, { items: rows });
       }
       if (method === "GET" && pathname === "/blog/feed.xml") {
-        return handleFeed(res);
+        return handleFeed(req, res);
       }
       if (method === "GET" && pathname === "/blog/sitemap.xml") {
-        return handleSitemap(res);
+        return handleSitemap(req, res);
       }
       if (method === "POST" && pathname === "/blog/newsletter") {
         return await handleNewsletter(req, res, ip);
@@ -721,6 +743,12 @@ export async function createBlogApi() {
     const email = String(body.email || "").trim().toLowerCase();
     const password = String(body.password || "");
     assert(email && password, 400, "Email and password are required");
+
+    // The per-account bucket: a guessed password gets very few attempts
+    // against any one account, whatever network it comes from.
+    if (!accountLimit(email)) {
+      throw new HttpError(429, "Too many sign-in attempts for this account. Try again in a few minutes.");
+    }
 
     const admin = await db.prepare("SELECT * FROM admins WHERE email = ?").get(email);
     if (!admin || !(await verifyPassword(password, admin.password_hash))) {
@@ -1003,20 +1031,20 @@ export async function createBlogApi() {
     });
   }
 
-  async function handleFeed(res) {
+  async function handleFeed(req, res) {
     const posts = await db
       .prepare(
         `SELECT ${POST_COLUMNS}, b.content ${POST_JOINS}
          WHERE ${publicPostClause()} ORDER BY b.published_at DESC LIMIT 30`
       )
       .all(nowIso());
-    return sendText(res, 200, buildRss(posts), "application/rss+xml; charset=utf-8", {
+    return sendText(res, 200, buildRss(posts, requestOrigin(req)), "application/rss+xml; charset=utf-8", {
       "Cache-Control": "public, max-age=300",
     });
   }
 
-  async function handleSitemap(res) {
-    return sendText(res, 200, await buildSitemap(db), "application/xml; charset=utf-8", {
+  async function handleSitemap(req, res) {
+    return sendText(res, 200, await buildSitemap(db, requestOrigin(req)), "application/xml; charset=utf-8", {
       "Cache-Control": "public, max-age=300",
     });
   }
