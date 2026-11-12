@@ -1,7 +1,7 @@
 import { createDatabase, createPool } from "./pgdb.js";
 import { config } from "./config.js";
 import { nowIso, readingTime, slugify } from "./utils.js";
-import { SCHEMA_SQL, SCHEMA_VERSION } from "./schema.js";
+import { MIGRATIONS, SCHEMA_SQL, SCHEMA_VERSION } from "./schema.js";
 import {
   seedAuthors,
   seedCategories,
@@ -59,17 +59,19 @@ export function initDatabase() {
 }
 
 /**
- * Applies the schema when it is missing or out of date.
+ * Applies the schema when it is missing, then runs any migrations the
+ * database has not seen yet.
  *
  * The steady state is a single round trip that reads the version, so a
- * cold start does not re-run nineteen DDL statements every time. Against
- * a connection pooler, where each query costs real latency, that is worth
- * the check.
+ * cold start does not re-run DDL every time. Against a connection pooler,
+ * where each query costs real latency, that is worth the check.
  */
 async function migrateSchema(db) {
   let current = 0;
   try {
-    const row = await db.prepare("SELECT version FROM schema_version LIMIT 1").get();
+    // The table may not exist yet on a first boot. That is an expected
+    // condition, so the probe is quiet.
+    const row = await db.prepare("SELECT version FROM schema_version LIMIT 1", { quiet: true }).get();
     current = Number(row?.version ?? 0);
   } catch {
     // The schema has not been applied yet.
@@ -78,11 +80,40 @@ async function migrateSchema(db) {
 
   if (current === SCHEMA_VERSION) return;
 
-  // Future migrations hang off the version check below.
-  await db.exec(SCHEMA_SQL);
+  if (current < 1) {
+    await db.exec(SCHEMA_SQL);
+    current = 1;
+  }
+
+  for (const migration of MIGRATIONS) {
+    if (current >= migration.version) continue;
+    await db.exec(migration.sql);
+    await verifyMigration(db, migration);
+    current = migration.version;
+  }
+
   await db.exec(
-    `DELETE FROM schema_version; INSERT INTO schema_version (version) VALUES (${SCHEMA_VERSION});`
+    `DELETE FROM schema_version; INSERT INTO schema_version (version) VALUES (${current});`
   );
+}
+
+/**
+ * Confirms a migration actually landed.
+ *
+ * A DDL batch can be accepted and still change nothing — a pooler may drop
+ * it, for instance. The version must never be written ahead of the schema,
+ * or every query afterwards fails on a column that does not exist.
+ */
+async function verifyMigration(db, migration) {
+  if (!migration.verify) return;
+  const rows = await db.prepare(migration.verify).all();
+  const found = rows.length;
+  const expected = migration.expect ?? 1;
+  if (found < expected) {
+    throw new Error(
+      `[blog-db] migration v${migration.version} did not take effect (${found}/${expected} objects found). The schema version was not advanced.`
+    );
+  }
 }
 
 async function seedIfEmpty(db) {

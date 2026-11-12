@@ -26,12 +26,15 @@ GitHub ──▶ Vercel ──▶ static site (CDN)  +  /api/* serverless functi
    string*. Copy the **Session pooler** one, not the direct connection:
 
    ```
-   postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres?pgbouncer=true
+   postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres
    ```
 
    > The session pooler (port `6543`) is required. The direct connection
    > (`5432`) exhausts the connection limit as soon as a few serverless
    > functions run at once.
+   >
+   > Leave `?pgbouncer=true` off. That flag is a Prisma convention; the `pg`
+   > driver does not need it and it breaks the URL parser.
 
 4. **Get the API keys.** *Project Settings → API*. Supabase now issues two
    kinds of key, and the names matter:
@@ -60,14 +63,15 @@ GitHub ──▶ Vercel ──▶ static site (CDN)  +  /api/* serverless functi
 
    | Setting | Value |
    |---|---|
-   | Root Directory | `portofolio-main` |
+   | Root Directory | *(leave empty — the app is at the repository root)* |
    | Framework Preset | Vite |
    | Build Command | `npm run build` |
    | Output Directory | `dist` |
    | Install Command | `npm ci` |
 
-   > The Root Directory matters. The repository root still holds the older
-   > static site; without this, Vercel builds the wrong thing.
+   > The app lives at the root of the repository. An older version of this
+   > guide pointed the root directory at `portofolio-main`; that folder is
+   > gone, and setting it now makes Vercel build nothing.
 
 3. **Add the environment variables.** Add each of these for **Production**,
    **Preview** *and* **Build**:
@@ -151,6 +155,36 @@ slow login can stall every other request sharing the instance. It is now the
 promise-based `crypto.scrypt`. The parameters are unchanged, so existing
 hashes stay valid.
 
+### More than one person can write
+
+The `admins` table always had a `role` column, but nothing enforced it — every
+account was an administrator in everything but name. It is now the backbone of
+a two-tier setup:
+
+| | Writer | Administrator |
+|---|---|---|
+| Write and edit their own drafts | yes | yes |
+| Publish, schedule, feature | no | yes |
+| Delete an article or an upload | no | yes |
+| Categories, tags, bylines | no | yes |
+| Subscribers, JSON export | no | yes |
+| Manage writer accounts | no | yes |
+
+A writer's article is always saved as a draft, under their own byline, and
+only an administrator can move it live. The enforcement is in
+`server/api.js` — the interface in `src/blog/admin/permissions.js` only hides
+what the server would refuse anyway.
+
+The **Writers** screen (*/admin/blog/writers*) is where accounts are created,
+given a byline, promoted, demoted, disabled and have their password reset.
+The **Activity log** on the same screen records who published, deleted or
+changed what.
+
+Migrations run automatically at boot. `server/schema.sql` contains the current
+schema, and `server/db.js` applies anything newer than the version stored in
+the database — including a check that the migration actually landed, so a
+silently dropped batch can never leave the version ahead of the schema.
+
 ---
 
 ## Local development
@@ -176,4 +210,7 @@ do — the schema is applied automatically on first start.
 | Articles 404 but the site loads | The SPA rewrite is missing from `vercel.json` |
 | Images upload then 404 | The bucket name does not match `BLOG_UPLOAD_BUCKET`, or the bucket is not private |
 | `column "id" does not exist` | The schema was applied by an older version — re-run `server/schema.sql` |
+| `column "created_by" does not exist` | The database is on schema v1 — the v2 migration runs at boot; check the deploy logs |
 | The feed is missing your newest articles | `DATABASE_URL` is not available at build time |
+| A writer cannot publish | Working as intended — only administrators publish |
+| The admin console has no borders or panels | `blog.css` is stale; the design tokens moved to `:root` |

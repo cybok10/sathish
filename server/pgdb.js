@@ -124,12 +124,17 @@ export function createDatabase(pool) {
    * Runs a query, logging the statement when it fails. On a serverless
    * runtime the logs are the only place a failure is visible, so the SQL
    * is included rather than just the message.
+   *
+   * A quiet query is one whose failure is expected and handled by the
+   * caller — a probe for a table that may not exist yet, for instance.
    */
-  const query = async (text, args) => {
+  const query = async (text, args, quiet = false) => {
     try {
       return await client().query(text, args);
     } catch (error) {
-      console.error("[blog-db] query failed:", error.message, "\n[blog-db] sql:", text);
+      if (!quiet) {
+        console.error("[blog-db] query failed:", error.message, "\n[blog-db] sql:", text);
+      }
       throw error;
     }
   };
@@ -178,16 +183,16 @@ export function createDatabase(pool) {
       return transactionClient !== null;
     },
 
-    prepare(sql) {
+    prepare(sql, { quiet = false } = {}) {
       const text = toPgPlaceholders(toPgDialect(sql));
 
       return {
         async get(...args) {
-          const result = await query(text, args);
+          const result = await query(text, args, quiet);
           return result.rows[0];
         },
         async all(...args) {
-          const result = await query(text, args);
+          const result = await query(text, args, quiet);
           return result.rows;
         },
         async run(...args) {
@@ -198,7 +203,7 @@ export function createDatabase(pool) {
             isInsert(text) && !hasReturning(text) && (await tableHasId(insertTarget(text)))
               ? `${text} RETURNING id`
               : text;
-          const result = await query(statement, args);
+          const result = await query(statement, args, quiet);
           return {
             changes: result.rowCount ?? 0,
             lastInsertRowid: result.rows[0]?.id ?? null,

@@ -10,13 +10,17 @@ import {
   tools as tacticsTools,
 } from "../src/blog/data/tactics.js";
 import {
+  audit,
   clearCookie,
+  createAdmin,
   createSession,
   destroySession,
   ensureAdmin,
   getSession,
+  hasRole,
   requireAdmin,
   sessionCookie,
+  updateAdmin,
   verifyPassword,
 } from "./auth.js";
 import {
@@ -44,6 +48,7 @@ const POST_COLUMNS = `
   b.id, b.title, b.slug, b.excerpt, b.cover_image, b.status, b.is_featured,
   b.view_count, b.reading_time, b.published_at, b.created_at, b.updated_at,
   b.meta_title, b.meta_description, b.author_id, b.category_id,
+  b.created_by, b.updated_by,
   a.name AS author_name, a.slug AS author_slug, a.avatar_url AS author_avatar,
   a.role AS author_role, a.bio AS author_bio,
   c.name AS category_name, c.slug AS category_slug`;
@@ -436,6 +441,8 @@ export async function createBlogApi() {
             email: session.email,
             name: session.name,
             role: session.role,
+            status: session.status || "active",
+            author_id: session.author_id ?? null,
           },
           csrfToken: session.csrf_token,
         });
@@ -560,46 +567,53 @@ export async function createBlogApi() {
       }
 
       // ---------- Admin ----------
+      // Every route below states who may use it. Editors write drafts;
+      // only admins publish, delete and change the site structure.
       if (pathname === "/admin/stats" && method === "GET") {
-        if (!(await requireAdmin(req, res, db))) return;
-        return handleStats(res);
+        const session = await requireAdmin(req, res, db);
+        if (!session) return;
+        return handleStats(res, session);
       }
       if (pathname === "/admin/posts" && method === "GET") {
-        if (!(await requireAdmin(req, res, db))) return;
-        return handleAdminPosts(url, res);
+        const session = await requireAdmin(req, res, db);
+        if (!session) return;
+        return handleAdminPosts(url, res, session);
       }
       if (pathname === "/admin/posts" && method === "POST") {
         const session = await requireAdmin(req, res, db, { mutating: true });
         if (!session) return;
         if (!writeLimit(ip)) throw new HttpError(429, "Too many writes");
-        return await handleCreatePost(req, res);
+        return await handleCreatePost(req, res, session);
       }
       if (pathname === "/admin/posts/export" && method === "GET") {
-        if (!(await requireAdmin(req, res, db))) return;
+        if (!(await requireAdmin(req, res, db, { role: "admin" }))) return;
         return handleExport(res);
       }
       match = pathname.match(/^\/admin\/posts\/(\d+)$/);
       if (match) {
         const id = Number(match[1]);
         if (method === "GET") {
-          if (!(await requireAdmin(req, res, db))) return;
-          return handleAdminPost(id, res);
+          const session = await requireAdmin(req, res, db);
+          if (!session) return;
+          return handleAdminPost(id, res, session);
         }
         if (method === "PUT" || method === "PATCH") {
           const session = await requireAdmin(req, res, db, { mutating: true });
           if (!session) return;
           if (!writeLimit(ip)) throw new HttpError(429, "Too many writes");
-          return await handleUpdatePost(req, res, id);
+          return await handleUpdatePost(req, res, id, session);
         }
         if (method === "DELETE") {
-          if (!(await requireAdmin(req, res, db, { mutating: true }))) return;
-          return handleDeletePost(id, res);
+          const session = await requireAdmin(req, res, db, { mutating: true, role: "admin" });
+          if (!session) return;
+          return handleDeletePost(id, res, session);
         }
       }
       match = pathname.match(/^\/admin\/posts\/(\d+)\/(publish|unpublish|feature|unfeature|schedule)$/);
       if (method === "POST" && match) {
-        if (!(await requireAdmin(req, res, db, { mutating: true }))) return;
-        return await handlePostAction(Number(match[1]), match[2], req, res);
+        const session = await requireAdmin(req, res, db, { mutating: true, role: "admin" });
+        if (!session) return;
+        return await handlePostAction(Number(match[1]), match[2], req, res, session);
       }
       match = pathname.match(/^\/admin\/(categories|tags|authors)(?:\/(\d+))?$/);
       if (match) {
@@ -609,10 +623,37 @@ export async function createBlogApi() {
           if (!(await requireAdmin(req, res, db))) return;
           return handleTaxonomyList(kind, res);
         }
-        if (!(await requireAdmin(req, res, db, { mutating: true }))) return;
-        if (method === "POST" && !id) return await handleTaxonomyCreate(kind, req, res);
-        if ((method === "PUT" || method === "PATCH") && id) return await handleTaxonomyUpdate(kind, id, req, res);
-        if (method === "DELETE" && id) return handleTaxonomyDelete(kind, id, res);
+        const session = await requireAdmin(req, res, db, { mutating: true, role: "admin" });
+        if (!session) return;
+        if (method === "POST" && !id) {
+          const result = await handleTaxonomyCreate(kind, req, res);
+          await audit(db, session, "taxonomy.create", {
+            targetType: kind,
+            targetId: result?.item?.id ?? "",
+            detail: result?.item?.name ?? "",
+          });
+          return result;
+        }
+        if ((method === "PUT" || method === "PATCH") && id) {
+          const result = await handleTaxonomyUpdate(kind, id, req, res);
+          await audit(db, session, "taxonomy.update", {
+            targetType: kind,
+            targetId: id,
+            detail: result?.item?.name ?? "",
+          });
+          return result;
+        }
+        if (method === "DELETE" && id) {
+          const table = TAXONOMY[kind]?.table;
+          const doomed = table ? await db.prepare(`SELECT name FROM ${table} WHERE id = ?`).get(id) : null;
+          const result = await handleTaxonomyDelete(kind, id, res);
+          await audit(db, session, "taxonomy.delete", {
+            targetType: kind,
+            targetId: id,
+            detail: doomed?.name ?? "",
+          });
+          return result;
+        }
       }
       if (pathname === "/admin/uploads" && method === "POST") {
         if (!(await requireAdmin(req, res, db, { mutating: true }))) return;
@@ -621,15 +662,43 @@ export async function createBlogApi() {
       }
       match = pathname.match(/^\/admin\/uploads\/([^/]+)$/);
       if (method === "DELETE" && match) {
-        if (!(await requireAdmin(req, res, db, { mutating: true }))) return;
+        if (!(await requireAdmin(req, res, db, { mutating: true, role: "admin" }))) return;
         return handleDeleteUpload(decodeURIComponent(match[1]), res);
       }
       if (pathname === "/admin/subscribers" && method === "GET") {
-        if (!(await requireAdmin(req, res, db))) return;
+        if (!(await requireAdmin(req, res, db, { role: "admin" }))) return;
         const items = await db
           .prepare("SELECT id, email, status, created_at FROM subscribers ORDER BY created_at DESC LIMIT 500")
           .all();
         return sendJson(res, 200, { items });
+      }
+
+      // ---------- Writers ----------
+      if (pathname === "/admin/writers" && method === "GET") {
+        if (!(await requireAdmin(req, res, db, { role: "admin" }))) return;
+        return handleWritersList(res);
+      }
+      if (pathname === "/admin/writers" && method === "POST") {
+        const session = await requireAdmin(req, res, db, { mutating: true, role: "admin" });
+        if (!session) return;
+        return await handleWriterCreate(req, res, session);
+      }
+      match = pathname.match(/^\/admin\/writers\/(\d+)$/);
+      if (match) {
+        const id = Number(match[1]);
+        if (method === "GET") {
+          if (!(await requireAdmin(req, res, db, { role: "admin" }))) return;
+          return handleWriterGet(id, res);
+        }
+        if (method === "PATCH" || method === "PUT") {
+          const session = await requireAdmin(req, res, db, { mutating: true, role: "admin" });
+          if (!session) return;
+          return await handleWriterUpdate(id, req, res, session);
+        }
+      }
+      if (pathname === "/admin/audit" && method === "GET") {
+        if (!(await requireAdmin(req, res, db, { role: "admin" }))) return;
+        return handleAuditList(res);
       }
 
       throw new HttpError(404, "API route not found");
@@ -658,11 +727,24 @@ export async function createBlogApi() {
       throw new HttpError(401, "Invalid email or password");
     }
 
+    // A disabled account keeps its history but cannot sign in.
+    if (admin.status === "disabled") {
+      throw new HttpError(403, "This account has been disabled. Contact the site owner.");
+    }
+
     await cleanupExpiredSessions();
     const session = await createSession(db, admin.id);
+    await db.prepare("UPDATE admins SET last_login_at = ? WHERE id = ?").run(nowIso(), admin.id);
     res.setHeader("Set-Cookie", sessionCookie(req, session.token, session.expiresAt));
     return sendJson(res, 200, {
-      admin: { id: admin.id, email: admin.email, name: admin.name, role: admin.role },
+      admin: {
+        id: admin.id,
+        email: admin.email,
+        name: admin.name,
+        role: admin.role,
+        status: admin.status || "active",
+        author_id: admin.author_id ?? null,
+      },
       csrfToken: session.csrf,
     });
   }
@@ -972,8 +1054,14 @@ export async function createBlogApi() {
 
   // ---------- admin handlers ----------
 
-  async function handleStats(res) {
+  async function handleStats(res, session) {
     await publishDueScheduled(db);
+    const isAdmin = hasRole(session.role, "admin");
+    // Editors see the numbers for their own desk, not the whole site.
+    const filter = editorFilter(session);
+    const scope = filter.sql ? `WHERE ${filter.sql}` : "";
+    const scopeParams = filter.params;
+
     const totals = await db
       .prepare(
         `SELECT
@@ -982,15 +1070,19 @@ export async function createBlogApi() {
           SUM(CASE WHEN status = 'draft' THEN 1 ELSE 0 END)::int AS draft,
           SUM(CASE WHEN status = 'scheduled' THEN 1 ELSE 0 END)::int AS scheduled,
           COALESCE(SUM(view_count), 0)::int AS views
-        FROM blogs`
+        FROM blogs b ${scope}`
       )
-      .get();
+      .get(...scopeParams);
     const popular = await db
-      .prepare(`SELECT ${POST_COLUMNS}, ${TAGS_SUBQUERY} ${POST_JOINS} ORDER BY b.view_count DESC LIMIT 5`)
-      .all();
+      .prepare(
+        `SELECT ${POST_COLUMNS}, ${TAGS_SUBQUERY} ${POST_JOINS} ${scope} ORDER BY b.view_count DESC LIMIT 5`
+      )
+      .all(...scopeParams);
     const recent = await db
-      .prepare(`SELECT ${POST_COLUMNS}, ${TAGS_SUBQUERY} ${POST_JOINS} ORDER BY b.updated_at DESC LIMIT 5`)
-      .all();
+      .prepare(
+        `SELECT ${POST_COLUMNS}, ${TAGS_SUBQUERY} ${POST_JOINS} ${scope} ORDER BY b.updated_at DESC LIMIT 5`
+      )
+      .all(...scopeParams);
     const subscribers = (await db.prepare("SELECT COUNT(*)::int AS count FROM subscribers WHERE status = 'active'").get()).count;
     const categories = (await db.prepare("SELECT COUNT(*)::int AS count FROM categories").get()).count;
     return sendJson(res, 200, {
@@ -1000,15 +1092,41 @@ export async function createBlogApi() {
         draft: totals.draft || 0,
         scheduled: totals.scheduled || 0,
         views: totals.views || 0,
-        subscribers,
+        subscribers: isAdmin ? subscribers : 0,
         categories,
       },
       popular: popular.map((row) => mapPost(row)),
       recent: recent.map((row) => mapPost(row)),
+      scope: isAdmin ? "site" : "own",
     });
   }
 
-  async function handleAdminPosts(url, res) {
+  /**
+   * Editors only ever see their own desk: the posts they created, the posts
+   * they last touched, and any draft carrying their byline. Admins see the
+   * whole archive.
+   *
+   * The byline alone is not enough. Two accounts can share a byline, and the
+   * site owner's published articles must not become editable by linking a
+   * writer to the same author row.
+   */
+  function editorFilter(session) {
+    if (hasRole(session.role, "admin")) return { sql: "", params: [] };
+    const params = [session.admin_id, session.admin_id];
+    let sql = "(b.created_by = ? OR b.updated_by = ?";
+    if (session.author_id != null) {
+      sql += " OR (b.author_id = ? AND b.status = 'draft')";
+      params.push(session.author_id);
+    }
+    return { sql: `${sql})`, params };
+  }
+
+  function editorScope(session) {
+    const filter = editorFilter(session);
+    return filter.sql ? { sql: ` AND ${filter.sql}`, params: filter.params } : filter;
+  }
+
+  async function handleAdminPosts(url, res, session) {
     await publishDueScheduled(db);
     const page = clamp(toInt(url.searchParams.get("page"), 1), 1, 10_000);
     const limit = clamp(toInt(url.searchParams.get("limit"), 20), 1, 100);
@@ -1024,7 +1142,10 @@ export async function createBlogApi() {
       where.push("(b.title LIKE ? OR b.slug LIKE ?)");
       params.push(`%${q}%`, `%${q}%`);
     }
-    const whereSql = where.join(" AND ");
+    // Editors may also filter their list down to one specific status.
+    const scope = editorScope(session);
+    const whereSql = `${where.join(" AND ")}${scope.sql}`;
+    params.push(...scope.params);
     const total = (
       await db.prepare(`SELECT COUNT(*)::int AS count ${POST_JOINS} WHERE ${whereSql}`).get(...params)
     ).count;
@@ -1037,10 +1158,11 @@ export async function createBlogApi() {
     return sendJson(res, 200, {
       items: rows.map((row) => mapPost(row)),
       pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) },
+      scope: hasRole(session.role, "admin") ? "site" : "own",
     });
   }
 
-  async function handleAdminPost(id, res) {
+  async function handleAdminPost(id, res, session) {
     const row = await db
       .prepare(
         `SELECT ${POST_COLUMNS}, b.content, ${TAGS_SUBQUERY}, ${TAGS_IDS_SUBQUERY}
@@ -1048,7 +1170,25 @@ export async function createBlogApi() {
       )
       .get(id);
     if (!row) throw new HttpError(404, "Article not found");
+    assertPostOwnership(session, row);
     return sendJson(res, 200, { post: mapPost(row, { withContent: true }) });
+  }
+
+  /**
+   * An editor may only touch articles they wrote, last edited, or that are
+   * still a draft carrying their byline. Admins may touch anything.
+   */
+  function assertPostOwnership(session, row) {
+    if (hasRole(session.role, "admin")) return;
+    const mine =
+      Number(row.created_by) === Number(session.admin_id) ||
+      Number(row.updated_by) === Number(session.admin_id) ||
+      (session.author_id != null &&
+        Number(row.author_id) === Number(session.author_id) &&
+        row.status === "draft");
+    if (!mine) {
+      throw new HttpError(403, "You can only edit articles that belong to you.");
+    }
   }
 
   async function validateRelations(payload) {
@@ -1062,9 +1202,22 @@ export async function createBlogApi() {
     }
   }
 
-  async function handleCreatePost(req, res) {
+  async function handleCreatePost(req, res, session) {
     const body = await parseJsonBody(req, config.maxJsonBytes);
     const data = validatePostPayload(body);
+    const isAdmin = hasRole(session.role, "admin");
+
+    // Editors publish nothing. Their work lands as a draft for review.
+    if (!isAdmin && data.status && data.status !== "draft") {
+      data.status = "draft";
+      data.is_featured = 0;
+    }
+
+    // An editor writes under their own byline; the dropdown is advisory only.
+    if (!isAdmin) {
+      data.author_id = session.author_id ?? null;
+    }
+
     await validateRelations(data);
 
     const now = nowIso();
@@ -1088,8 +1241,8 @@ export async function createBlogApi() {
         `INSERT INTO blogs (
           title, slug, excerpt, content, cover_image, author_id, category_id,
           status, is_featured, view_count, reading_time, published_at,
-          created_at, updated_at, meta_title, meta_description
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?)`
+          created_at, updated_at, meta_title, meta_description, created_by, updated_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         data.title,
@@ -1106,19 +1259,39 @@ export async function createBlogApi() {
         now,
         now,
         metaTitle,
-        metaDescription
+        metaDescription,
+        session.admin_id,
+        session.admin_id
       );
 
     const id = Number(result.lastInsertRowid);
     await setPostTags(db, id, data.tags || []);
-    return handleAdminPost(id, res);
+    await audit(db, session, "post.create", {
+      targetType: "blog",
+      targetId: id,
+      detail: `${data.title} (${status})`,
+    });
+    return handleAdminPost(id, res, session);
   }
 
-  async function handleUpdatePost(req, res, id) {
+  async function handleUpdatePost(req, res, id, session) {
     const existing = await db.prepare("SELECT * FROM blogs WHERE id = ?").get(id);
     if (!existing) throw new HttpError(404, "Article not found");
+    assertPostOwnership(session, existing);
+    const isAdmin = hasRole(session.role, "admin");
+
     const body = await parseJsonBody(req, config.maxJsonBytes);
     const data = validatePostPayload(body, { partial: true });
+
+    // Editors cannot move an article into a published or scheduled state,
+    // and cannot claim the featured slot.
+    if (!isAdmin) {
+      if (data.status && data.status !== "draft") data.status = "draft";
+      if (data.is_featured) data.is_featured = 0;
+      if (data.published_at) data.published_at = null;
+      data.author_id = session.author_id ?? null;
+    }
+
     await validateRelations(data);
 
     const nextStatus = data.status ?? existing.status;
@@ -1158,7 +1331,8 @@ export async function createBlogApi() {
       `UPDATE blogs SET
         title = ?, slug = ?, excerpt = ?, content = ?, cover_image = ?,
         author_id = ?, category_id = ?, status = ?, is_featured = ?,
-        reading_time = ?, published_at = ?, updated_at = ?, meta_title = ?, meta_description = ?
+        reading_time = ?, published_at = ?, updated_at = ?, meta_title = ?, meta_description = ?,
+        updated_by = ?
        WHERE id = ?`
     ).run(
       fields.title,
@@ -1175,49 +1349,74 @@ export async function createBlogApi() {
       fields.updated_at,
       fields.meta_title,
       fields.meta_description,
+      session.admin_id,
       id
     );
 
     if (data.tags !== undefined) await setPostTags(db, id, data.tags);
-    return handleAdminPost(id, res);
+    await audit(db, session, "post.update", {
+      targetType: "blog",
+      targetId: id,
+      detail: fields.title,
+    });
+    return handleAdminPost(id, res, session);
   }
 
-  async function handleDeletePost(id, res) {
+  async function handleDeletePost(id, res, session) {
+    const existing = await db.prepare("SELECT id, title FROM blogs WHERE id = ?").get(id);
+    if (!existing) throw new HttpError(404, "Article not found");
     const result = await db.prepare("DELETE FROM blogs WHERE id = ?").run(id);
     if (!result.changes) throw new HttpError(404, "Article not found");
+    await audit(db, session, "post.delete", {
+      targetType: "blog",
+      targetId: id,
+      detail: existing.title,
+    });
     return sendJson(res, 200, { ok: true, id });
   }
 
-  async function handlePostAction(id, action, req, res) {
-    const post = await db.prepare("SELECT id, status, published_at FROM blogs WHERE id = ?").get(id);
+  async function handlePostAction(id, action, req, res, session) {
+    const post = await db.prepare("SELECT id, title, status, published_at FROM blogs WHERE id = ?").get(id);
     if (!post) throw new HttpError(404, "Article not found");
     const body = await parseJsonBody(req, 4096).catch(() => ({}));
 
     if (action === "publish") {
       const publishedAt = post.published_at || nowIso();
-      await db.prepare("UPDATE blogs SET status = 'published', published_at = ?, updated_at = ? WHERE id = ?").run(
+      await db.prepare("UPDATE blogs SET status = 'published', published_at = ?, updated_at = ?, updated_by = ? WHERE id = ?").run(
         publishedAt,
         nowIso(),
+        session.admin_id,
         id
       );
     } else if (action === "unpublish") {
-      await db.prepare("UPDATE blogs SET status = 'draft', updated_at = ? WHERE id = ?").run(nowIso(), id);
+      await db.prepare("UPDATE blogs SET status = 'draft', updated_at = ?, updated_by = ? WHERE id = ?").run(
+        nowIso(),
+        session.admin_id,
+        id
+      );
     } else if (action === "feature" || action === "unfeature") {
-      await db.prepare("UPDATE blogs SET is_featured = ?, updated_at = ? WHERE id = ?").run(
+      await db.prepare("UPDATE blogs SET is_featured = ?, updated_at = ?, updated_by = ? WHERE id = ?").run(
         action === "feature" ? 1 : 0,
         nowIso(),
+        session.admin_id,
         id
       );
     } else if (action === "schedule") {
       const when = toIso(body.published_at);
       assert(when && Date.parse(when) > Date.now(), 400, "Provide a future publication date");
-      await db.prepare("UPDATE blogs SET status = 'scheduled', published_at = ?, updated_at = ? WHERE id = ?").run(
+      await db.prepare("UPDATE blogs SET status = 'scheduled', published_at = ?, updated_at = ?, updated_by = ? WHERE id = ?").run(
         when,
         nowIso(),
+        session.admin_id,
         id
       );
     }
-    return handleAdminPost(id, res);
+    await audit(db, session, `post.${action}`, {
+      targetType: "blog",
+      targetId: id,
+      detail: post.title,
+    });
+    return handleAdminPost(id, res, session);
   }
 
   async function handleExport(res) {
@@ -1235,6 +1434,184 @@ export async function createBlogApi() {
       "Cache-Control": "no-store",
     });
     return res.end(payload);
+  }
+
+  // ---------- Writers ----------
+
+  const WRITER_COLUMNS = `
+    a.id, a.email, a.name, a.role, a.status, a.author_id, a.last_login_at, a.created_at,
+    au.name AS byline_name, au.slug AS byline_slug,
+    (SELECT COUNT(*)::int FROM blogs b WHERE b.created_by = a.id OR b.updated_by = a.id) AS post_count`;
+
+  async function handleWritersList(res) {
+    const items = await db
+      .prepare(
+        `SELECT ${WRITER_COLUMNS}
+         FROM admins a
+         LEFT JOIN authors au ON au.id = a.author_id
+         ORDER BY CASE a.role WHEN 'admin' THEN 0 ELSE 1 END, a.name, a.email`
+      )
+      .all();
+    return sendJson(res, 200, { items });
+  }
+
+  async function handleWriterGet(id, res) {
+    const item = await db
+      .prepare(
+        `SELECT ${WRITER_COLUMNS}
+         FROM admins a
+         LEFT JOIN authors au ON au.id = a.author_id
+         WHERE a.id = ?`
+      )
+      .get(id);
+    if (!item) throw new HttpError(404, "Writer not found");
+    return sendJson(res, 200, { writer: item });
+  }
+
+  /**
+   * Gives a writer a public byline.
+   *
+   * A byline is the author profile an article is published under. Without
+   * one, a writer's article would either carry somebody else's name or none
+   * at all — so a missing byline is created from the account details.
+   */
+  async function ensureWriterByline({ name, email, authorId }) {
+    if (authorId) return authorId;
+
+    const byEmail = await db
+      .prepare("SELECT id FROM authors WHERE lower(email) = lower(?) LIMIT 1")
+      .get(email);
+    if (byEmail) return byEmail.id;
+
+    const base = slugify(name || String(email).split("@")[0] || "writer", "author");
+    let slug = base;
+    let suffix = 1;
+    while (await db.prepare("SELECT id FROM authors WHERE slug = ?").get(slug)) {
+      slug = `${base}-${suffix}`;
+      suffix += 1;
+    }
+
+    const result = await db
+      .prepare(
+        `INSERT INTO authors (name, slug, role, bio, avatar_url, email, github, linkedin, twitter, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, '', '', '', ?)`
+      )
+      .run(
+        String(name || String(email).split("@")[0]).slice(0, 120),
+        slug,
+        "Contributor",
+        "",
+        "",
+        String(email).slice(0, 160),
+        nowIso()
+      );
+    return Number(result.lastInsertRowid);
+  }
+
+  async function handleWriterCreate(req, res, session) {
+    const body = await parseJsonBody(req, config.maxJsonBytes);
+    const email = String(body.email || "").trim().toLowerCase();
+    const name = String(body.name || "").trim();
+    const password = String(body.password || "");
+
+    assert(isEmail(email), 400, "Enter a valid email address");
+    assert(name, 400, "A display name is required");
+    assert(password.length >= 10, 400, "Use a temporary password of at least 10 characters");
+
+    const existing = await db.prepare("SELECT id FROM admins WHERE email = ?").get(email);
+    assert(!existing, 409, "An account with that email already exists");
+
+    const role = body.role === "admin" ? "admin" : "editor";
+    const status = ["active", "invited", "disabled"].includes(body.status) ? body.status : "active";
+
+    let authorId = body.author_id ? toInt(body.author_id, 0) : null;
+    if (authorId) {
+      const author = await db.prepare("SELECT id FROM authors WHERE id = ?").get(authorId);
+      assert(author, 400, "Selected byline does not exist");
+    } else {
+      // Every writer gets a byline, so their articles never carry someone
+      // else's name.
+      authorId = await ensureWriterByline({ name, email });
+    }
+
+    const id = await createAdmin(db, { email, name, password, role, authorId, status });
+    await audit(db, session, "writer.create", {
+      targetType: "admin",
+      targetId: id,
+      detail: `${name} <${email}> as ${role}`,
+    });
+    const writer = await db
+      .prepare(
+        `SELECT ${WRITER_COLUMNS} FROM admins a LEFT JOIN authors au ON au.id = a.author_id WHERE a.id = ?`
+      )
+      .get(id);
+    return sendJson(res, 201, { writer });
+  }
+
+  async function handleWriterUpdate(id, req, res, session) {
+    const existing = await db.prepare("SELECT * FROM admins WHERE id = ?").get(id);
+    if (!existing) throw new HttpError(404, "Writer not found");
+
+    const body = await parseJsonBody(req, config.maxJsonBytes);
+    const patch = {};
+
+    if (body.name !== undefined) {
+      const name = String(body.name || "").trim();
+      assert(name, 400, "A display name is required");
+      patch.name = name;
+    }
+    if (body.role !== undefined) {
+      const role = body.role === "admin" ? "admin" : "editor";
+      // Do not let the last administrator demote themselves out of the site.
+      if (existing.role === "admin" && role !== "admin") {
+        const admins = await db.prepare("SELECT COUNT(*)::int AS count FROM admins WHERE role = 'admin'").get();
+        assert(Number(admins.count) > 1, 400, "At least one administrator must remain");
+      }
+      patch.role = role;
+    }
+    if (body.status !== undefined) {
+      const status = ["active", "invited", "disabled"].includes(body.status) ? body.status : "active";
+      if (existing.role === "admin" && status === "disabled") {
+        const admins = await db.prepare("SELECT COUNT(*)::int AS count FROM admins WHERE role = 'admin'").get();
+        assert(Number(admins.count) > 1, 400, "At least one administrator must remain");
+      }
+      patch.status = status;
+    }
+    if (body.author_id !== undefined) {
+      const authorId = body.author_id ? toInt(body.author_id, 0) : null;
+      if (authorId) {
+        const author = await db.prepare("SELECT id FROM authors WHERE id = ?").get(authorId);
+        assert(author, 400, "Selected byline does not exist");
+      }
+      patch.authorId = authorId;
+    }
+    if (body.password) {
+      assert(String(body.password).length >= 10, 400, "Use a password of at least 10 characters");
+      patch.password = String(body.password);
+    }
+
+    await updateAdmin(db, id, patch);
+    await audit(db, session, "writer.update", {
+      targetType: "admin",
+      targetId: id,
+      detail: Object.keys(patch).join(", ") || "no changes",
+    });
+    const writer = await db
+      .prepare(
+        `SELECT ${WRITER_COLUMNS} FROM admins a LEFT JOIN authors au ON au.id = a.author_id WHERE a.id = ?`
+      )
+      .get(id);
+    return sendJson(res, 200, { writer });
+  }
+
+  async function handleAuditList(res) {
+    const items = await db
+      .prepare(
+        `SELECT id, admin_id, admin_email, action, target_type, target_id, detail, created_at
+         FROM admin_audit ORDER BY created_at DESC LIMIT 200`
+      )
+      .all();
+    return sendJson(res, 200, { items });
   }
 
   const TAXONOMY = {

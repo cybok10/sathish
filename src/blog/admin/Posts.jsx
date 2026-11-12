@@ -3,12 +3,14 @@ import { api, formatDate, formatNumber, queryString, submissionErrorMessage } fr
 import { Link, useRouter } from "../router";
 import { useApi } from "../useApi";
 import { useAdmin } from "./AdminApp";
+import { canDelete, canPublish } from "./permissions";
 import { ErrorState } from "../components/States";
 import { EditIcon, ExternalIcon, PlusIcon, StarIcon, TrashIcon } from "../components/Icons";
 
 export default function Posts() {
   const { navigate } = useRouter();
-  const { setNotice } = useAdmin();
+  const { admin, setNotice } = useAdmin();
+  const publisher = canPublish(admin);
   const [status, setStatus] = useState("");
   const [query, setQuery] = useState("");
   const [appliedQuery, setAppliedQuery] = useState("");
@@ -50,12 +52,18 @@ export default function Posts() {
     }
   };
 
+  const items = data?.items || [];
+
   return (
     <>
       <div className="admin-topbar">
         <div>
-          <h1>Articles</h1>
-          <p>Create, edit, publish, schedule, and feature posts.</p>
+          <h1>{publisher ? "Articles" : "Your articles"}</h1>
+          <p>
+            {publisher
+              ? "Create, edit, publish, schedule, and feature posts."
+              : "The drafts you have written. An administrator publishes them for you."}
+          </p>
         </div>
         <div className="admin-actions">
           <Link className="blog-btn blog-btn-primary blog-btn-sm" to="/admin/blog/new">
@@ -72,7 +80,7 @@ export default function Posts() {
               setPage(1);
               setAppliedQuery(query.trim());
             }}
-            style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}
+            className="admin-filter-bar"
           >
             <input
               className="blog-input"
@@ -101,6 +109,7 @@ export default function Posts() {
           </form>
           <span className="admin-note">
             {data?.pagination?.total ?? 0} article{(data?.pagination?.total ?? 0) === 1 ? "" : "s"}
+            {data?.scope === "own" && !publisher ? " · yours only" : ""}
           </span>
         </div>
 
@@ -124,7 +133,7 @@ export default function Posts() {
                 </tr>
               </thead>
               <tbody>
-                {(data?.items || []).map((post) => (
+                {items.map((post) => (
                   <tr key={post.id}>
                     <td className="title-cell">
                       <Link to={`/admin/blog/edit/${post.id}`}>{post.title}</Link>
@@ -153,40 +162,47 @@ export default function Posts() {
                         >
                           <EditIcon size={13} />
                         </button>
-                        <a
-                          className="blog-btn blog-btn-sm"
-                          href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/blog/${post.slug}`}
-                          aria-label={`View ${post.title}`}
-                        >
-                          <ExternalIcon size={13} />
-                        </a>
-                        {post.status === "published" ? (
-                          <button type="button" className="blog-btn blog-btn-sm" disabled={busyId === post.id} onClick={() => runAction(post, "unpublish")}>
-                            Unpublish
-                          </button>
-                        ) : (
-                          <button type="button" className="blog-btn blog-btn-sm" disabled={busyId === post.id} onClick={() => runAction(post, "publish")}>
-                            Publish
+                        {post.status === "published" && (
+                          <a
+                            className="blog-btn blog-btn-sm"
+                            href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/blog/${post.slug}`}
+                            aria-label={`View ${post.title}`}
+                          >
+                            <ExternalIcon size={13} />
+                          </a>
+                        )}
+                        {publisher &&
+                          (post.status === "published" ? (
+                            <button type="button" className="blog-btn blog-btn-sm" disabled={busyId === post.id} onClick={() => runAction(post, "unpublish")}>
+                              Unpublish
+                            </button>
+                          ) : (
+                            <button type="button" className="blog-btn blog-btn-sm" disabled={busyId === post.id} onClick={() => runAction(post, "publish")}>
+                              Publish
+                            </button>
+                          ))}
+                        {publisher && (
+                          <button
+                            type="button"
+                            className="blog-btn blog-btn-sm"
+                            disabled={busyId === post.id}
+                            onClick={() => runAction(post, post.is_featured ? "unfeature" : "feature")}
+                            aria-label={post.is_featured ? "Unfeature" : "Feature"}
+                          >
+                            <StarIcon size={13} />
                           </button>
                         )}
-                        <button
-                          type="button"
-                          className="blog-btn blog-btn-sm"
-                          disabled={busyId === post.id}
-                          onClick={() => runAction(post, post.is_featured ? "unfeature" : "feature")}
-                          aria-label={post.is_featured ? "Unfeature" : "Feature"}
-                        >
-                          <StarIcon size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          className="blog-btn blog-btn-sm blog-btn-danger"
-                          disabled={busyId === post.id}
-                          onClick={() => remove(post)}
-                          aria-label={`Delete ${post.title}`}
-                        >
-                          <TrashIcon size={13} />
-                        </button>
+                        {canDelete(admin) && (
+                          <button
+                            type="button"
+                            className="blog-btn blog-btn-sm blog-btn-danger"
+                            disabled={busyId === post.id}
+                            onClick={() => remove(post)}
+                            aria-label={`Delete ${post.title}`}
+                          >
+                            <TrashIcon size={13} />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -194,8 +210,14 @@ export default function Posts() {
                 {loading && !data && (
                   <tr><td colSpan={8} className="admin-empty">Loading articles…</td></tr>
                 )}
-                {!loading && !data?.items?.length && (
-                  <tr><td colSpan={8} className="admin-empty">No articles match this filter.</td></tr>
+                {!loading && !items.length && (
+                  <tr>
+                    <td colSpan={8} className="admin-empty">
+                      {publisher
+                        ? "No articles match this filter."
+                        : "You have not written anything yet. Start a new article to see it here."}
+                    </td>
+                  </tr>
                 )}
               </tbody>
             </table>
@@ -203,7 +225,7 @@ export default function Posts() {
         )}
 
         {data?.pagination && data.pagination.totalPages > 1 && (
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "0.9rem 1.1rem", borderTop: "1px solid #27272a" }}>
+          <div className="admin-pagination">
             <button type="button" className="blog-btn blog-btn-sm" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>
               Previous
             </button>
@@ -214,6 +236,12 @@ export default function Posts() {
           </div>
         )}
       </div>
+
+      {!publisher && (
+        <p className="admin-note" style={{ marginTop: "0.9rem" }}>
+          Writers work in drafts. Ask an administrator to publish when the article is ready.
+        </p>
+      )}
     </>
   );
 }
