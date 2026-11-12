@@ -66,8 +66,8 @@ export default function TacticsPromo() {
               Tactics
             </h2>
             <p>
-              Not articles — a working reference. Protocol walkthroughs, the toolkit, and the
-              defensive checks, organised the way the work actually happens.
+              A working reference, not articles. Protocol walkthroughs, the toolkit, and the
+              defensive checks — organised the way the work actually happens.
             </p>
           </div>
           <Link to="/blog/tactics">

@@ -21,7 +21,7 @@ import {
   XIcon,
 } from "../components/Icons";
 
-function ShareButtons({ post }) {
+function ShareButtons({ post, vertical = false }) {
   const [copied, setCopied] = useState(false);
   const url = absoluteUrl(`/blog/${post.slug}`);
   const text = encodeURIComponent(post.title);
@@ -44,7 +44,7 @@ function ShareButtons({ post }) {
   };
 
   return (
-    <div className="blog-share-list">
+    <div className={`blog-share-list${vertical ? " blog-share-list--rail" : ""}`}>
       <a
         href={`https://twitter.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`}
         target="_blank"
@@ -116,6 +116,13 @@ export default function BlogPost({ slug }) {
     [slug, Boolean(post)]
   );
 
+  // The sidebar carries the stories people read next, the way a news desk
+  // would rather than a "you might also like" strip under the article.
+  const trending = useApi(
+    (signal) => api("/blog/posts?limit=5&sort=popular", { signal }),
+    []
+  );
+
   const headings = useMemo(() => extractHeadings(post?.content || ""), [post?.content]);
   const [activeId, setActiveId] = useState("");
 
@@ -182,8 +189,6 @@ export default function BlogPost({ slug }) {
     );
   }
 
-  const shareUrl = absoluteUrl(`/blog/${post.slug}`);
-
   return (
     <>
       <ReadingProgress />
@@ -203,53 +208,66 @@ export default function BlogPost({ slug }) {
             <span style={{ color: "#a1a1aa" }}>{post.title}</span>
           </nav>
 
-          <header className="blog-article-header">
-            {post.category_slug && (
-              <Link className="blog-chip blog-chip-accent" to={`/blog/category/${post.category_slug}`}>
-                {post.category_name}
-              </Link>
-            )}
-            <h1>{post.title}</h1>
-            {post.excerpt && <p className="blog-article-subtitle">{post.excerpt}</p>}
-
-            <div className="blog-byline">
-              <Link to={`/blog/author/${post.author_slug}`} style={{ display: "flex", alignItems: "center", gap: "0.7rem", textDecoration: "none" }}>
-                {post.author_avatar && (
-                  <img className="blog-avatar" src={assetUrl(post.author_avatar)} alt={post.author_name} />
-                )}
-                <span className="blog-byline-author">
-                  <strong>{post.author_name}</strong>
-                  <span>{post.author_role}</span>
-                </span>
-              </Link>
-              <span className="blog-byline-sep">|</span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
-                <CalendarIcon size={14} />
-                <time dateTime={post.published_at}>{formatDate(post.published_at)}</time>
-              </span>
-              {post.updated_at && post.updated_at !== post.published_at && (
-                <span>Updated {formatDate(post.updated_at)}</span>
-              )}
-              <span className="blog-byline-sep">|</span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
-                <ClockIcon size={14} /> {post.reading_time} min read
-              </span>
-              <span className="blog-byline-sep">|</span>
-              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
-                <EyeIcon size={14} /> {formatNumber(post.view_count)} reads
-              </span>
-            </div>
-          </header>
-
-          {post.cover_image && (
-            <figure className="blog-cover">
-              <img src={assetUrl(post.cover_image)} alt={post.title} />
-              <figcaption>{post.category_name} · {post.title}</figcaption>
-            </figure>
-          )}
-
           <div className="blog-article-layout">
-            <div>
+            <aside className="blog-share-rail" aria-label="Share this article">
+              <span className="blog-share-rail-label">Share</span>
+              <ShareButtons post={post} vertical />
+            </aside>
+
+            <div className="blog-article-main">
+              <header className="blog-article-header">
+                <h1>{post.title}</h1>
+                {post.excerpt && <p className="blog-article-subtitle">{post.excerpt}</p>}
+
+                {/*
+                  The news-desk meta row: who wrote it and when on the
+                  left, what it is about on the right.
+                */}
+                <div className="blog-postmeta">
+                  <div className="blog-postmeta-left">
+                    <Link to={`/blog/author/${post.author_slug}`} className="blog-postmeta-author">
+                      {post.author_avatar && (
+                        <img className="blog-avatar" src={assetUrl(post.author_avatar)} alt={post.author_name} />
+                      )}
+                      <strong>{post.author_name}</strong>
+                    </Link>
+                    <span className="blog-postmeta-item">
+                      <CalendarIcon size={13} />
+                      <time dateTime={post.published_at}>{formatDate(post.published_at)}</time>
+                    </span>
+                    {post.updated_at && post.updated_at !== post.published_at && (
+                      <span className="blog-postmeta-item">Updated {formatDate(post.updated_at)}</span>
+                    )}
+                    <span className="blog-postmeta-item">
+                      <ClockIcon size={13} /> {post.reading_time} min read
+                    </span>
+                    <span className="blog-postmeta-item">
+                      <EyeIcon size={13} /> {formatNumber(post.view_count)} reads
+                    </span>
+                  </div>
+
+                  <div className="blog-postmeta-tags">
+                    {post.category_slug && (
+                      <Link className="blog-chip blog-chip-accent" to={`/blog/category/${post.category_slug}`}>
+                        {post.category_name}
+                      </Link>
+                    )}
+                    {(post.tags || []).slice(0, 2).map((tag) => (
+                      <Link key={tag} className="blog-chip" to={`/blog/search?q=${encodeURIComponent(tag)}`}>
+                        {tag}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </header>
+
+              {post.cover_image && (
+                <figure className="blog-cover">
+                  <img src={assetUrl(post.cover_image)} alt={post.title} />
+                  <figcaption>{post.category_name} · {post.title}</figcaption>
+                </figure>
+              )}
+
               <Markdown content={post.content} />
 
               <div className="blog-article-footer">
@@ -322,12 +340,24 @@ export default function BlogPost({ slug }) {
                   </nav>
                 </div>
               )}
-              <div className="blog-share">
-                <h2>Share</h2>
-                <ShareButtons post={post} />
-                <p className="blog-dim" style={{ fontSize: "0.72rem", marginTop: "0.75rem", lineHeight: 1.6 }}>
-                  {shareUrl.replace(/^https?:\/\//, "")}
-                </p>
+              <div className="blog-side-block">
+                <h2>Top stories this week</h2>
+                <ul className="blog-side-list">
+                  {(trending.data?.items || [])
+                    .filter((item) => item.slug !== post.slug)
+                    .slice(0, 5)
+                    .map((item) => (
+                      <li key={item.id}>
+                        <Link to={`/blog/${item.slug}`}>{item.title}</Link>
+                        <span className="blog-side-meta">
+                          {formatNumber(item.view_count)} reads · {item.reading_time || 1} min
+                        </span>
+                      </li>
+                    ))}
+                </ul>
+                <Link to="/blog?sort=popular" className="blog-btn blog-btn-sm blog-side-more">
+                  Load more <ArrowRight size={12} />
+                </Link>
               </div>
             </aside>
           </div>
